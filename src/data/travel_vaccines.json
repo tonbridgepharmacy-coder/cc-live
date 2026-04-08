@@ -1,0 +1,536 @@
+[
+    {
+        "country": "France",
+        "iso_code": "FR",
+        "continent": "Europe",
+        "flag": "https://flagcdn.com/fr.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            },
+            {
+                "name": "Typhoid",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Follow NHS travel health guidance",
+            "Ensure safe food and water hygiene"
+        ],
+        "dos": [
+            "Arrange travel insurance"
+        ],
+        "donts": [
+            "Ignore vaccine schedule timing"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Germany",
+        "iso_code": "DE",
+        "continent": "Europe",
+        "flag": "https://flagcdn.com/de.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Standard travel health advice"
+        ],
+        "dos": [
+            "Check local guidelines"
+        ],
+        "donts": [
+            "Travel without insurance"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Spain",
+        "iso_code": "ES",
+        "continent": "Europe",
+        "flag": "https://flagcdn.com/es.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Standard travel health advice"
+        ],
+        "dos": [
+            "Stay hydrated"
+        ],
+        "donts": [
+            "Forget sun protection"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Italy",
+        "iso_code": "IT",
+        "continent": "Europe",
+        "flag": "https://flagcdn.com/it.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Standard travel health advice"
+        ],
+        "dos": [
+            "Check local health news"
+        ],
+        "donts": [
+            "Travel without coverage"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Thailand",
+        "iso_code": "TH",
+        "continent": "Asia",
+        "flag": "https://flagcdn.com/th.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            },
+            {
+                "name": "Typhoid",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": true,
+        "health_precautions": [
+            "Drink bottled water",
+            "Insect bite prevention"
+        ],
+        "dos": [
+            "Carry vaccination proof"
+        ],
+        "donts": [
+            "Touch wild animals"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "India",
+        "iso_code": "IN",
+        "continent": "Asia",
+        "flag": "https://flagcdn.com/in.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            },
+            {
+                "name": "Typhoid",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": true,
+        "health_precautions": [
+            "Strict water/food hygiene",
+            "Antimalarials often recommended"
+        ],
+        "dos": [
+            "Wash hands frequently"
+        ],
+        "donts": [
+            "Eat raw salads/unpeeled fruit"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Brazil",
+        "iso_code": "BR",
+        "continent": "South America",
+        "flag": "https://flagcdn.com/br.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Yellow Fever",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": true,
+        "health_precautions": [
+            "Yellow Fever certificate required",
+            "Mosquito protection"
+        ],
+        "dos": [
+            "Book vaccines 4-6 weeks early"
+        ],
+        "donts": [
+            "Ignore fever symptoms"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Kenya",
+        "iso_code": "KE",
+        "continent": "Africa",
+        "flag": "https://flagcdn.com/ke.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Yellow Fever",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": true,
+        "health_precautions": [
+            "Antimalarials critical",
+            "Use bed nets"
+        ],
+        "dos": [
+            "Carry International Certificate of Vaccination"
+        ],
+        "donts": [
+            "Bathe in fresh water lakes (bilharzia risk)"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "United Kingdom",
+        "iso_code": "GB",
+        "continent": "Europe",
+        "flag": "https://flagcdn.com/gb.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Standard NHS guidance"
+        ],
+        "dos": [
+            "Register with a GP"
+        ],
+        "donts": [
+            "Ignore vaccine schedules"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "United States",
+        "iso_code": "US",
+        "continent": "North America",
+        "flag": "https://flagcdn.com/us.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Follow CDC/NHS guidance"
+        ],
+        "dos": [
+            "Secure comprehensive health insurance"
+        ],
+        "donts": [
+            "Travel without medical documents"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Australia",
+        "iso_code": "AU",
+        "continent": "Oceania",
+        "flag": "https://flagcdn.com/au.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Standard health advice"
+        ],
+        "dos": [
+            "Check specific entry requirements"
+        ],
+        "donts": [
+            "Forget sun protection"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Egypt",
+        "iso_code": "EG",
+        "continent": "Africa",
+        "flag": "https://flagcdn.com/eg.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            },
+            {
+                "name": "Typhoid",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Food/water hygiene is paramount"
+        ],
+        "dos": [
+            "Stay hydrated with safe water"
+        ],
+        "donts": [
+            "Swim in slow-moving water"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Vietnam",
+        "iso_code": "VN",
+        "continent": "Asia",
+        "flag": "https://flagcdn.com/vn.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            },
+            {
+                "name": "Typhoid",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": true,
+        "health_precautions": [
+            "Mosquito protection in rural areas"
+        ],
+        "dos": [
+            "Use high-quality repellent"
+        ],
+        "donts": [
+            "Drink tap water"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "South Africa",
+        "iso_code": "ZA",
+        "continent": "Africa",
+        "flag": "https://flagcdn.com/za.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": true,
+        "health_precautions": [
+            "Malaria risk in specific parks (e.g. Kruger)"
+        ],
+        "dos": [
+            "Check specific itineraries for risk"
+        ],
+        "donts": [
+            "Travel without first aid kit"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Mexico",
+        "iso_code": "MX",
+        "continent": "North America",
+        "flag": "https://flagcdn.com/mx.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Avoid unpasteurized milk"
+        ],
+        "dos": [
+            "Drink bottled water"
+        ],
+        "donts": [
+            "Eat undercooked food"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Argentina",
+        "iso_code": "AR",
+        "continent": "South America",
+        "flag": "https://flagcdn.com/ar.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Standard travel health advice"
+        ],
+        "dos": [
+            "Check local outbreak news"
+        ],
+        "donts": [
+            "Ignore food hygiene"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Turkey",
+        "iso_code": "TR",
+        "continent": "Europe/Asia",
+        "flag": "https://flagcdn.com/tr.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Safe food and water guidance"
+        ],
+        "dos": [
+            "Check UK government travel advice"
+        ],
+        "donts": [
+            "Travel without travel insurance"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "Japan",
+        "iso_code": "JP",
+        "continent": "Asia",
+        "flag": "https://flagcdn.com/jp.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Follow local Japanese health advice"
+        ],
+        "dos": [
+            "Keep hygiene standards high"
+        ],
+        "donts": [
+            "Ignore seasonal health alerts"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "United Arab Emirates",
+        "iso_code": "AE",
+        "continent": "Middle East",
+        "flag": "https://flagcdn.com/ae.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            }
+        ],
+        "malaria_risk": false,
+        "health_precautions": [
+            "Heat safety and hydration"
+        ],
+        "dos": [
+            "Check medication entry rules"
+        ],
+        "donts": [
+            "Dehydrate in summer months"
+        ],
+        "last_updated": "2026-02-22"
+    },
+    {
+        "country": "China",
+        "iso_code": "CN",
+        "continent": "Asia",
+        "flag": "https://flagcdn.com/cn.svg",
+        "vaccines": [
+            {
+                "name": "Routine Vaccines (MMR, DTP)",
+                "type": "Required"
+            },
+            {
+                "name": "Hepatitis A",
+                "type": "Recommended"
+            }
+        ],
+        "malaria_risk": true,
+        "health_precautions": [
+            "Air quality awareness",
+            "Food hygiene"
+        ],
+        "dos": [
+            "Check regional health requirements"
+        ],
+        "donts": [
+            "Drink tap water"
+        ],
+        "last_updated": "2026-02-22"
+    }
+]
