@@ -1,11 +1,11 @@
-// import { auth, signOut } from "@/auth";
+import { auth, signOut } from "@/auth";
+import { redirect } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import TopNavbar from "@/components/admin/TopNavbar";
 
 async function signOutAction() {
     "use server";
-    // await signOut();
-    console.log("Signout disabled");
+    await signOut({ redirectTo: "/auth/login" });
 }
 
 export default async function AdminLayout({
@@ -13,9 +13,21 @@ export default async function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    // const session = await auth();
-    // Bypassing auth for now
-    const session = { user: { name: "Admin (Bypassed)", email: "admin@local" } };
+    const session = await auth();
+
+    console.log("🛠️ AdminLayout Session:", JSON.stringify(session, null, 2));
+
+    // If no session or not admin, redirect to login
+    if (!session) {
+        redirect("/auth/login?error=NoSessionFound");
+    }
+    if (!session.user) {
+        redirect("/auth/login?error=NoUserInSession");
+    }
+    const role = (session.user as any).role;
+    if (role !== "admin") {
+        redirect(`/auth/login?error=NotAdmin_RoleIs_${role}`);
+    }
 
     return (
         <div className="flex min-h-screen bg-slate-50">

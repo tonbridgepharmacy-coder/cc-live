@@ -32,8 +32,8 @@ export default async function BookPage() {
                         Book Your Appointment
                     </h1>
                     <p className="text-base sm:text-lg text-text-secondary leading-relaxed max-w-2xl mx-auto">
-                        Select a service, choose a time that suits you, and secure your booking
-                        online.
+                        Select your appointment info, enter your details, and secure your booking
+                        online in 3 easy steps.
                     </p>
                 </div>
             </section>

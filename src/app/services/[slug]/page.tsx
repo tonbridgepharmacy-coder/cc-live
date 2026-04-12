@@ -88,7 +88,7 @@ export default async function ServiceDetailsPage({ params }: { params: { slug: s
                                     Book an appointment today with our certified pharmacy professionals.
                                 </p>
                                 <Link
-                                    href="/book"
+                                    href={`/book?serviceId=${service._id}`}
                                     className="inline-block w-full text-center px-8 py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/30 hover:-translate-y-1 transition-all"
                                 >
                                     Book Now

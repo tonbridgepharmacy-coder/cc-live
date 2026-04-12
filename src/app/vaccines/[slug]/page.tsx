@@ -85,7 +85,7 @@ export default async function VaccineDetailsPage({ params }: { params: { slug: s
                                 </div>
 
                                 <Link
-                                    href="/book"
+                                    href={`/book?serviceId=${vaccine._id}`}
                                     className="flex items-center justify-center gap-2 w-full text-center px-8 py-4 bg-primary text-white rounded-2xl font-bold text-lg shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-1 hover:bg-primary-dark transition-all"
                                 >
                                     Book Vaccination

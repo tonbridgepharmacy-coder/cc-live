@@ -6,7 +6,8 @@ export const metadata: Metadata = {
     description: "Secure login for Clarke & Coleman Pharmacy administration.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
+    const searchParams = await props.searchParams;
     return (
         <div className="min-h-screen flex items-center justify-center bg-background px-4">
             <div className="w-full max-w-md bg-white rounded-2xl border border-border/60 shadow-sm overflow-hidden">
@@ -23,6 +24,9 @@ export default function LoginPage() {
                     <p className="text-xs text-text-muted">
                         Authorized personnel only. If you are not an administrator, please return to the main site.
                     </p>
+                    <div className="mt-4 p-2 bg-red-50 text-red-600 text-[10px] break-all font-mono rounded">
+                        DEBUG: AUTH_URL is currently '{process.env.AUTH_URL}' | ERR: {searchParams.error || 'None'}
+                    </div>
                 </div>
             </div>
         </div>

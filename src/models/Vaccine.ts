@@ -12,6 +12,7 @@ export interface IVaccine extends Document {
     price: number;
     crossedPrice?: number;
     rating?: number;
+    reorderLevel: number;
     status: 'draft' | 'published';
     createdAt: Date;
     updatedAt: Date;
@@ -30,6 +31,7 @@ const vaccineSchema = new Schema<IVaccine>(
         price: { type: Number, required: true },
         crossedPrice: { type: Number },
         rating: { type: Number, min: 0, max: 5 },
+        reorderLevel: { type: Number, default: 10, min: 0 },
         status: { type: String, enum: ['draft', 'published'], default: 'draft' },
     },
     { timestamps: true }

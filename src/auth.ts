@@ -2,33 +2,63 @@ import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
+import connectToDatabase from "@/lib/db";
+import User from "@/models/User";
+
+// FORCING OVERRIDE for local development so you do not have to restart your terminal!
+// NextAuth will crash/loop if AUTH_URL is set to production but running on localhost.
+if (process.env.NODE_ENV !== "production") {
+    delete process.env.AUTH_URL;
+}
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
-    // secret is automatically inferred and also set in authConfig
     ...authConfig,
     providers: [
         Credentials({
             async authorize(credentials) {
                 const parsedCredentials = z
-                    .object({ email: z.string().email(), password: z.string().min(6) })
+                    .object({
+                        email: z.string().email(),
+                        password: z.string().min(6),
+                    })
                     .safeParse(credentials);
 
-                if (parsedCredentials.success) {
-                    const { email, password } = parsedCredentials.data;
-                    // Mock Admin check - In a real app, query the database
-                    if (email === "admin@clarkecoleman.co.uk" && password === "admin123") {
-                        return {
-                            id: "admin-1",
-                            name: "Admin User",
-                            email: "admin@clarkecoleman.co.uk",
-                            // role: "admin", // Extend session type if needed
-                        };
-                    }
+                if (!parsedCredentials.success) {
+                    console.log("Invalid credential format");
+                    return null;
                 }
-                console.log("Invalid credentials");
-                return null;
+
+                const { email, password } = parsedCredentials.data;
+
+                try {
+                    await connectToDatabase();
+                    const user = await User.findOne({ email: email.toLowerCase() });
+
+                    if (!user) {
+                        console.log("User not found:", email);
+                        return null;
+                    }
+
+                    const isPasswordValid = await user.comparePassword(password);
+
+                    if (!isPasswordValid) {
+                        console.log("❌ Invalid password for:", email);
+                        return null;
+                    }
+
+                    console.log("✅ Credentials matched for:", email, "Role:", user.role);
+
+                    return {
+                        id: user._id.toString(),
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                    };
+                } catch (error) {
+                    console.error("❌ Auth error:", error);
+                    return null;
+                }
             },
         }),
     ],
 });
-
