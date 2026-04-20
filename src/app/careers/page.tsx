@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getActiveJobs } from "@/lib/actions/job";
 import { Search, MapPin, Clock, ArrowRight, FileText } from "lucide-react";
+import { format } from "date-fns";
 
 export const dynamic = 'force-dynamic';
 
@@ -97,7 +98,7 @@ export default async function CareersPage() {
                                             {job.department}
                                         </span>
                                         <span className="text-xs text-slate-400 font-medium tracking-tight">
-                                            {new Date(job.postedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                            {format(new Date(job.postedDate), "MMM d")}
                                         </span>
                                     </div>
                                     <h3 className="text-2xl font-black text-slate-900 mb-6 group-hover:text-accent transition-colors">

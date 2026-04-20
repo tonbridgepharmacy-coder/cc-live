@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getJobBySlug } from "@/lib/actions/job";
 import { notFound } from "next/navigation";
 import { MapPin, Clock, ArrowLeft, Briefcase } from "lucide-react";
+import { format } from "date-fns";
 import ApplyForm from "./ApplyForm";
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,7 @@ export default async function JobDetailsPage({ params }: { params: { slug: strin
                                 {job.department}
                             </span>
                             <span className="text-sm text-slate-400 font-medium">
-                                Posted {new Date(job.postedDate).toLocaleDateString()}
+                                 Posted {format(new Date(job.postedDate), "MMM d, yyyy")}
                             </span>
                         </div>
                     </div>

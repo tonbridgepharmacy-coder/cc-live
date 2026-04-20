@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Download, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 import EnquiryActions from "@/components/admin/EnquiryActions";
 
 type EnquiryItem = {
@@ -79,8 +80,8 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
             const date = new Date(enquiry.createdAt);
             return [
                 enquiry._id,
-                date.toLocaleDateString(),
-                date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                format(date, "MMM d, yyyy"),
+                format(date, "hh:mm a"),
                 enquiry.name,
                 enquiry.email,
                 enquiry.phone,
@@ -236,8 +237,8 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
                                         </td>
                                         <td className="p-5">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-slate-700">{new Date(enquiry.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
-                                                <span className="text-xs text-slate-400 font-medium">{new Date(enquiry.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                                                <span className="text-sm font-bold text-slate-700">{format(new Date(enquiry.createdAt), "MMM d, yyyy")}</span>
+                                                <span className="text-xs text-slate-400 font-medium">{format(new Date(enquiry.createdAt), "hh:mm a")}</span>
                                             </div>
                                         </td>
                                         <td className="p-5">

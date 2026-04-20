@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MoreVertical, Eye, Edit, Trash2, Mail, CheckCircle2, XCircle, AlertCircle, Ban, CalendarPlus } from "lucide-react";
+import { format } from "date-fns";
 import ManualMailModal from "./ManualMailModal";
 import RejectAppointmentButton from "./RejectAppointmentButton";
 import EditAppointmentModal from "./EditAppointmentModal";
@@ -235,7 +236,7 @@ export default function AppointmentActions({ appointment, onStatusUpdate, onDele
                     <div className="grid grid-cols-1 gap-3 text-sm">
                         <div><span className="text-slate-400">Email:</span> <span className="font-semibold text-slate-700">{appointment.customerEmail || "N/A"}</span></div>
                         <div><span className="text-slate-400">Service:</span> <span className="font-semibold text-slate-700">{appointment.vaccineId?.title || "N/A"}</span></div>
-                        <div><span className="text-slate-400">Date:</span> <span className="font-semibold text-slate-700">{appointment.slotDate ? new Date(appointment.slotDate).toLocaleDateString() : "N/A"}</span></div>
+                        <div><span className="text-slate-400">Date:</span> <span className="font-semibold text-slate-700">{appointment.slotDate ? format(new Date(appointment.slotDate), "MMM d, yyyy") : "N/A"}</span></div>
                         <div><span className="text-slate-400">Time:</span> <span className="font-semibold text-slate-700">{appointment.slotTime || "N/A"}</span></div>
                         <div><span className="text-slate-400">Status:</span> <span className="font-semibold text-slate-700">{appointment.status}</span></div>
                     </div>
