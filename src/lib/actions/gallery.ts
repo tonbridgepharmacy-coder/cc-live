@@ -104,3 +104,46 @@ export async function deleteGalleryImage(id: string) {
         return { success: false, message: error.message || "Failed to delete image" };
     }
 }
+
+export async function deleteGalleryImages(ids: string[]) {
+    try {
+        await connectToDatabase();
+        await Gallery.deleteMany({ _id: { $in: ids } });
+
+        revalidatePath("/admin/gallery");
+        revalidatePath("/");
+
+        return { success: true, message: `${ids.length} images removed from gallery` };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Failed to delete images" };
+    }
+}
+
+export async function uploadGalleryImagesBatch(images: { imageUrl: string; caption?: string }[]) {
+    try {
+        await connectToDatabase();
+
+        // Get the current max order
+        const lastImage = await Gallery.findOne().sort({ order: -1 });
+        let nextOrder = lastImage ? lastImage.order + 1 : 0;
+
+        const docs = images.map(img => ({
+            ...img,
+            order: nextOrder++
+        }));
+
+        const newImages = await Gallery.insertMany(docs);
+
+        revalidatePath("/admin/gallery");
+        revalidatePath("/");
+
+        return {
+            success: true,
+            message: `${newImages.length} images added to gallery`,
+            images: JSON.parse(JSON.stringify(newImages)),
+        };
+    } catch (error: any) {
+        console.error("Gallery batch upload error:", error);
+        return { success: false, message: error.message || "Failed to upload images" };
+    }
+}

@@ -1,4 +1,10 @@
-import { getBatches, getLowStockAlerts, getExpiringBatches, createBatch } from "@/lib/actions/inventory";
+import {
+    getBatches,
+    getLowStockAlerts,
+    getExpiringBatches,
+    createBatch,
+    getVaccineInventoryStatus,
+} from "@/lib/actions/inventory";
 import { getVaccines } from "@/lib/actions/vaccine";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -37,11 +43,12 @@ async function handleUpdateBatchStatus(formData: FormData) {
 }
 
 export default async function InventoryPage() {
-    const [batches, lowStock, expiringBatches, vaccinesRes] = await Promise.all([
+    const [batches, lowStock, expiringBatches, vaccinesRes, vaccineInventoryStatus] = await Promise.all([
         getBatches(),
         getLowStockAlerts(),
         getExpiringBatches(30),
         getVaccines(),
+        getVaccineInventoryStatus(),
     ]);
 
     const vaccines = vaccinesRes.success ? vaccinesRes.vaccines || [] : [];
@@ -101,15 +108,15 @@ export default async function InventoryPage() {
                 <h2 className="text-lg font-bold text-text-primary mb-4">Add New Batch</h2>
                 <form action={handleCreateBatch} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-xs font-semibold text-text-primary mb-1">Batch Number</label>
-                        <input name="batchNumber" type="text" required
+                        <label htmlFor="batchNumber" className="block text-xs font-semibold text-text-primary mb-1">Batch Number</label>
+                        <input id="batchNumber" name="batchNumber" type="text" required
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                             placeholder="e.g. BCH-2026-001"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-text-primary mb-1">Vaccine</label>
-                        <select name="vaccineId" required
+                        <label htmlFor="vaccineId" className="block text-xs font-semibold text-text-primary mb-1">Vaccine</label>
+                        <select id="vaccineId" name="vaccineId" required
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         >
                             <option value="">Select vaccine...</option>
@@ -119,32 +126,32 @@ export default async function InventoryPage() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-text-primary mb-1">Quantity</label>
-                        <input name="quantityTotal" type="number" min="1" required
+                        <label htmlFor="quantityTotal" className="block text-xs font-semibold text-text-primary mb-1">Quantity</label>
+                        <input id="quantityTotal" name="quantityTotal" type="number" min="1" required
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-text-primary mb-1">Expiry Date</label>
-                        <input name="expiryDate" type="date" required
+                        <label htmlFor="expiryDate" className="block text-xs font-semibold text-text-primary mb-1">Expiry Date</label>
+                        <input id="expiryDate" name="expiryDate" type="date" required
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-text-primary mb-1">Supplier</label>
-                        <input name="supplier" type="text" required
+                        <label htmlFor="supplier" className="block text-xs font-semibold text-text-primary mb-1">Supplier</label>
+                        <input id="supplier" name="supplier" type="text" required
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-text-primary mb-1">Purchase Date</label>
-                        <input name="purchaseDate" type="date" required
+                        <label htmlFor="purchaseDate" className="block text-xs font-semibold text-text-primary mb-1">Purchase Date</label>
+                        <input id="purchaseDate" name="purchaseDate" type="date" required
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-text-primary mb-1">Cost Per Unit (£)</label>
-                        <input name="costPerUnit" type="number" step="0.01" min="0"
+                        <label htmlFor="costPerUnit" className="block text-xs font-semibold text-text-primary mb-1">Cost Per Unit (£)</label>
+                        <input id="costPerUnit" name="costPerUnit" type="number" step="0.01" min="0"
                             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
                     </div>
@@ -156,6 +163,81 @@ export default async function InventoryPage() {
                         </button>
                     </div>
                 </form>
+            </div>
+
+            {/* ─── All Vaccines Status ─── */}
+            <div className="bg-white rounded-xl border border-border/60 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-border/60 bg-background">
+                    <h2 className="font-bold text-text-primary">All Vaccines Status ({vaccineInventoryStatus.length})</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-background/50 border-b border-border/60">
+                            <tr>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Vaccine</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Publish</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Inventory Status</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Available</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Reserved</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Total</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Batches</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Reorder Level</th>
+                                <th className="p-4 text-xs font-bold text-text-secondary uppercase">Next Expiry</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/40">
+                            {vaccineInventoryStatus.length === 0 ? (
+                                <tr>
+                                    <td colSpan={9} className="p-8 text-center text-text-muted">
+                                        No vaccines found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                vaccineInventoryStatus.map((item: any) => (
+                                    <tr key={item.vaccineId} className="hover:bg-background/50">
+                                        <td className="p-4 text-sm font-semibold text-text-primary">{item.vaccineName}</td>
+                                        <td className="p-4 text-sm">
+                                            <span
+                                                className={`text-xs px-2 py-1 rounded-full font-medium capitalize ${
+                                                    item.publishStatus === "published"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-slate-100 text-slate-700"
+                                                }`}
+                                            >
+                                                {item.publishStatus}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm">
+                                            <span
+                                                className={`text-xs px-2 py-1 rounded-full font-bold ${
+                                                    item.inventoryStatus === "IN_STOCK"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : item.inventoryStatus === "LOW_STOCK"
+                                                          ? "bg-amber-100 text-amber-700"
+                                                          : item.inventoryStatus === "OUT_OF_STOCK"
+                                                            ? "bg-red-100 text-red-700"
+                                                            : "bg-slate-100 text-slate-700"
+                                                }`}
+                                            >
+                                                {item.inventoryStatus.replaceAll("_", " ")}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm font-bold text-text-primary">{item.totalAvailable}</td>
+                                        <td className="p-4 text-sm text-amber-600 font-medium">{item.totalReserved}</td>
+                                        <td className="p-4 text-sm text-text-secondary">{item.totalStock}</td>
+                                        <td className="p-4 text-sm text-text-secondary">{item.batchCount}</td>
+                                        <td className="p-4 text-sm text-text-secondary">{item.reorderLevel}</td>
+                                        <td className="p-4 text-sm text-text-secondary whitespace-nowrap">
+                                            {item.nextExpiryDate
+                                                ? format(new Date(item.nextExpiryDate), "d MMM yyyy")
+                                                : "—"}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* ─── Batches Table ─── */}

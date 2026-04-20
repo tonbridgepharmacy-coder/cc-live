@@ -6,6 +6,7 @@ import { releaseStock } from "@/lib/actions/inventory";
 import { sendEmail } from "@/lib/email";
 import { format } from "date-fns";
 import Vaccine from "@/models/Vaccine";
+import { handleConfirmedAppointmentAutomation } from "@/lib/appointmentAutomation";
 
 export async function POST(request: NextRequest) {
     const body = await request.text();
@@ -24,10 +25,11 @@ export async function POST(request: NextRequest) {
     let event;
     try {
         event = stripe.webhooks.constructEvent(body, sig!, webhookSecret);
-    } catch (err: any) {
-        console.error("Webhook signature verification failed:", err.message);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown webhook verification error";
+        console.error("Webhook signature verification failed:", message);
         return NextResponse.json(
-            { error: `Webhook Error: ${err.message}` },
+            { error: `Webhook Error: ${message}` },
             { status: 400 }
         );
     }
@@ -91,6 +93,11 @@ export async function POST(request: NextRequest) {
                     to: appointment.customerEmail,
                     subject: `Appointment Confirmed - ${format(new Date(appointment.slotDate), "d MMM yyyy")} at ${appointment.slotTime}`,
                     html: emailHtml,
+                });
+
+                await handleConfirmedAppointmentAutomation({
+                    appointment,
+                    serviceTitle: vaccine?.title || "Vaccination",
                 });
             } catch (emailError) {
                 console.error("Failed to send confirmation email:", emailError);

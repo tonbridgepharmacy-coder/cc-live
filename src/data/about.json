@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "title": "About Us | Clarke & Coleman Pharmacy",
+    "description": "Learn about Ankit Tyagi's vision for Clarke & Coleman Pharmacy and our commitment to Integrated Care, Excellence, and Community Health in Tonbridge."
+  },
+
+  "hero": {
+    "breadcrumb": "About Us",
+    "logoAlt": "Pharmacy Logo",
+    "headingPlain": "Protecting the health of our",
+    "headingHighlight": "community",
+    "subtext": "Welcome to Clarke & Coleman Pharmacy in Tonbridge, where premium care for you, your family, and your workplace is our promise."
+  },
+
+  "story": {
+    "founderBadge": "Meet Our Founder",
+    "founderImageAlt": "Ankit Tyagi - Pharmacist",
+    "quote": "My passion has always been to make healthcare accessible, personalized, and truly patient-centred.",
+    "paragraphs": [
+      "My name is {name}, and I am delighted to introduce you to our pharmacy. As a qualified pharmacist since 2009 and an Independent Pharmacist Prescriber, I bring over 17 years of dedicated experience in transforming healthcare delivery.",
+      "Throughout my career, I've had the privilege of leading innovative pharmacy services, championing integrated care within the NHS, and representing the community pharmacy voice in strategic healthcare discussions.",
+      "Now, as the proud owner of Clarke & Coleman Pharmacy, I'm bringing that same commitment and expertise directly to you and your loved ones."
+    ],
+    "founderName": "Ankit Tyagi",
+    "founderRole": "Independent Pharmacist Prescriber | Superintendent Pharmacist & Owner",
+    "experienceBadge": {
+      "label": "Experience",
+      "years": "17+ Years",
+      "description": "Dedicated to transforming healthcare delivery at the community level."
+    }
+  },
+
+  "values": {
+    "heading": "What We Stand For",
+    "subtext": "Since I qualified, I have learned to uphold five core values that define who I am as a healthcare professional and what this pharmacy stands for.",
+    "items": [
+      {
+        "key": "integrity",
+        "title": "Integrity",
+        "description": "We believe in honest, transparent healthcare. Every recommendation is in your best interest, backed by evidence."
+      },
+      {
+        "key": "care",
+        "title": "Care",
+        "description": "Compassion is at the heart of our practice. We take the time to listen, understand, and provide support beyond dispensing."
+      },
+      {
+        "key": "accountability",
+        "title": "Accountability",
+        "description": "We take responsibility for the care we provide, ensuring the highest standards of service and following through on commitments."
+      },
+      {
+        "key": "respect",
+        "title": "Respect",
+        "description": "Every patient deserves dignity. We value your time, your questions, and your individual health journey."
+      },
+      {
+        "key": "excellence",
+        "title": "Excellence",
+        "description": "Committed to the highest quality pharmaceutical care through continuous learning, innovation, and attention to detail."
+      },
+      {
+        "key": "integrated",
+        "title": "Integrated Care",
+        "description": "Our approach combines clinical excellence with genuine care, ensuring every interaction is meaningful.",
+        "iconLabel": "ICARE"
+      }
+    ]
+  },
+
+  "commitment": {
+    "heading": "Premium Care for You, Your Family, and Your Workplace.",
+    "subtext": "Our pharmacy is more than just a place to collect prescriptions—it's a healthcare destination built on trust, expertise, and a deep commitment to our community.",
+    "bullets": [
+      "Seamless healthcare centered around you",
+      "Expert advice and informed health decisions",
+      "Highest standard of pharmaceutical services"
+    ],
+    "quote": {
+      "cardHeading": "Your Trusted Partner",
+      "text": "\"I believe healthcare should work seamlessly and always put you at the centre. That's why I take the time to listen, answer your questions, and provide the guidance you need to make informed health decisions.\"",
+      "founderName": "Ankit Tyagi",
+      "founderRole": "Owner & Pharmacist",
+      "founderImageAlt": "Ankit Tyagi"
+    }
+  },
+
+  "enquiry": {
+    "heading": "Have a Question?",
+    "subtext": "Your health journey starts here—and we're honoured to be part of it. Reach out to us for any health advice or questions.",
+    "contactLabels": {
+      "call": "Call Us",
+      "email": "Email Us"
+    }
+  },
+
+  "cta": {
+    "headingPlain": "Ready to experience",
+    "headingHighlight": "Better Health?",
+    "buttons": [
+      { "label": "Book Appointment", "href": "/book" },
+      { "label": "Explore Services", "href": "/services" }
+    ]
+  }
+}

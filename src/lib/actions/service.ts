@@ -3,6 +3,7 @@
 import mongoose from "mongoose";
 import Service, { IService } from "@/models/Service";
 import { revalidatePath } from "next/cache";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 const MONGO_URI = process.env.MONGODB_URI;
 
@@ -29,7 +30,13 @@ async function connectToDatabase() {
 export async function createService(data: Partial<IService>) {
     try {
         await connectToDatabase();
-        const newService = await Service.create(data);
+        const payload = {
+            ...data,
+            metaTitle: data.metaTitle || data.title,
+            metaDescription: data.metaDescription || truncateText(stripHtmlTags(data.shortDescription || ""), 160),
+        };
+
+        const newService = await Service.create(payload);
         revalidatePath('/admin/services');
         revalidatePath('/services');
         return { success: true, service: JSON.parse(JSON.stringify(newService)) };
@@ -41,7 +48,13 @@ export async function createService(data: Partial<IService>) {
 export async function updateService(id: string, data: Partial<IService>) {
     try {
         await connectToDatabase();
-        const updatedService = await Service.findByIdAndUpdate(id, data, { new: true });
+        const payload = {
+            ...data,
+            metaTitle: data.metaTitle || data.title,
+            metaDescription: data.metaDescription || truncateText(stripHtmlTags(data.shortDescription || ""), 160),
+        };
+
+        const updatedService = await Service.findByIdAndUpdate(id, payload, { new: true });
         if (!updatedService) throw new Error("Service not found");
         revalidatePath('/admin/services');
         revalidatePath('/services');

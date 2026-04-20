@@ -4,12 +4,52 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createService, updateService } from "@/lib/actions/service";
 import { getCategories } from "@/lib/actions/category";
+import { uploadImage } from "@/lib/actions/upload";
 import TiptapEditor from "./TiptapEditor";
+import { stripHtmlTags } from "@/lib/utils";
 
-export default function ServiceForm({ initialData }: { initialData?: any }) {
+type ServiceCategoryListItem = { _id: string; name: string };
+
+type ServiceFormInitialData = {
+    _id?: string;
+    title?: string;
+    slug?: string;
+    category?: { _id?: string } | string;
+    bannerImage?: string;
+    bannerText?: string;
+    cardImage?: string;
+    shortDescription?: string;
+    content?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    seoKeywords?: string[];
+    canonicalUrl?: string;
+    noIndex?: boolean;
+    status?: string;
+};
+
+type ServiceFormState = {
+    title: string;
+    slug: string;
+    category: string;
+    bannerImage: string;
+    bannerText: string;
+    cardImage: string;
+    shortDescription: string;
+    content: string;
+    metaTitle: string;
+    metaDescription: string;
+    seoKeywords: string;
+    canonicalUrl: string;
+    noIndex: boolean;
+    status: "draft" | "published";
+};
+
+export default function ServiceForm({ initialData }: { initialData?: ServiceFormInitialData }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [categories, setCategories] = useState<any[]>([]);
+    const [uploadingField, setUploadingField] = useState<null | "bannerImage" | "cardImage">(null);
+    const [categories, setCategories] = useState<ServiceCategoryListItem[]>([]);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -19,16 +59,29 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
         fetchCategories();
     }, []);
 
-    const [formData, setFormData] = useState({
+    const initialCategoryId =
+        typeof initialData?.category === "string"
+            ? initialData.category
+            : initialData?.category?._id || "";
+
+    const initialStatus: "draft" | "published" =
+        initialData?.status === "published" ? "published" : "draft";
+
+    const [formData, setFormData] = useState<ServiceFormState>({
         title: initialData?.title || "",
         slug: initialData?.slug || "",
-        category: initialData?.category?._id || initialData?.category || "",
+        category: initialCategoryId,
         bannerImage: initialData?.bannerImage || "",
         bannerText: initialData?.bannerText || "",
         cardImage: initialData?.cardImage || "",
         shortDescription: initialData?.shortDescription || "",
         content: initialData?.content || "",
-        status: initialData?.status || "draft",
+        metaTitle: initialData?.metaTitle || "",
+        metaDescription: initialData?.metaDescription || "",
+        seoKeywords: initialData?.seoKeywords?.join(", ") || "",
+        canonicalUrl: initialData?.canonicalUrl || "",
+        noIndex: Boolean(initialData?.noIndex),
+        status: initialStatus,
     });
 
     const isEdit = !!initialData?._id;
@@ -51,11 +104,24 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
             return;
         }
 
+        if (!stripHtmlTags(formData.shortDescription)) {
+            alert("Please add a short description.");
+            return;
+        }
+
         setLoading(true);
 
+        const payload = {
+            ...formData,
+            seoKeywords: formData.seoKeywords
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+        };
+
         const res = isEdit
-            ? await updateService(initialData._id, formData)
-            : await createService(formData);
+            ? await updateService(initialData!._id as string, payload)
+            : await createService(payload);
 
         if (res.success) {
             router.push("/admin/services");
@@ -63,6 +129,28 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
         } else {
             alert("Error: " + res.error);
             setLoading(false);
+        }
+    };
+
+    const uploadAndSetImage = async (
+        file: File,
+        field: "bannerImage" | "cardImage"
+    ) => {
+        setUploadingField(field);
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            const res = await uploadImage(fd);
+            if (!res.success || !res.url) {
+                alert("Upload failed: " + (res.error || "Unknown error"));
+                return;
+            }
+            setFormData((prev) => ({ ...prev, [field]: res.url }));
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("Upload failed");
+        } finally {
+            setUploadingField(null);
         }
     };
 
@@ -77,7 +165,13 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <select
                         value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                status: e.target.value as ServiceFormState["status"],
+                            })
+                        }
+                        title="Service status"
                         className="px-4 py-2.5 rounded-xl border border-border bg-gray-50 text-sm font-semibold focus:ring-2 focus:ring-primary/20"
                     >
                         <option value="draft">Draft</option>
@@ -115,6 +209,7 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                                 required
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                title="Service category"
                                 className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm font-semibold focus:ring-2 focus:ring-primary/20 transition-all"
                             >
                                 <option value="" disabled>Select a Category...</option>
@@ -137,14 +232,11 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
 
                         <div>
                             <label className="block text-sm font-bold text-text-primary mb-2">Short Description</label>
-                            <textarea
-                                required
-                                rows={3}
-                                value={formData.shortDescription}
-                                onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                                placeholder="A brief summary for the 4:3 service cards..."
-                                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                            <TiptapEditor
+                                content={formData.shortDescription}
+                                onChange={(html) => setFormData({ ...formData, shortDescription: html })}
                             />
+                            <p className="text-xs text-text-muted mt-2">Used on service cards and SEO fallback.</p>
                         </div>
 
                         <div>
@@ -168,42 +260,128 @@ export default function ServiceForm({ initialData }: { initialData?: any }) {
                                 required
                                 value={formData.slug}
                                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                title="Service URL slug"
                                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20"
                             />
                             <p className="text-[10px] text-text-muted mt-1">Leave empty to auto-generate from title</p>
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">Banner Image URL</label>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">Banner Image</label>
                             <input
-                                required
-                                value={formData.bannerImage}
-                                onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
-                                placeholder="https://..."
+                                type="file"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    await uploadAndSetImage(file, "bannerImage");
+                                    e.target.value = "";
+                                }}
+                                disabled={uploadingField !== null}
+                                title="Upload banner image"
                                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20"
                             />
+                            <p className="text-[10px] text-text-muted mt-1">
+                                {uploadingField === "bannerImage" ? "Uploading..." : "Upload an image file (recommended 21:9)"}
+                            </p>
                             {formData.bannerImage && (
-                                <div className="mt-3 aspect-[21/9] rounded-lg overflow-hidden border border-border relative">
-                                    <img src={formData.bannerImage} alt="Hero Preview" className="w-full h-full object-cover" />
+                                <div className="mt-3 aspect-21/9 rounded-lg overflow-hidden border border-border relative">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={formData.bannerImage}
+                                        alt="Hero Preview"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => (e.currentTarget.src = "/placeholder-image.jpg")}
+                                    />
                                 </div>
                             )}
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">Grid Card Image URL (4:3)</label>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">Grid Card Image (4:3)</label>
                             <input
-                                required
-                                value={formData.cardImage}
-                                onChange={(e) => setFormData({ ...formData, cardImage: e.target.value })}
-                                placeholder="https://..."
+                                type="file"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    await uploadAndSetImage(file, "cardImage");
+                                    e.target.value = "";
+                                }}
+                                disabled={uploadingField !== null}
+                                title="Upload card image"
                                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20"
                             />
+                            <p className="text-[10px] text-text-muted mt-1">
+                                {uploadingField === "cardImage" ? "Uploading..." : "Upload an image file (recommended 4:3)"}
+                            </p>
                             {formData.cardImage && (
-                                <div className="mt-3 aspect-[4/3] rounded-lg overflow-hidden border border-border relative">
-                                    <img src={formData.cardImage} alt="Card Preview" className="w-full h-full object-cover" />
+                                <div className="mt-3 aspect-4/3 rounded-lg overflow-hidden border border-border relative">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={formData.cardImage}
+                                        alt="Card Preview"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => (e.currentTarget.src = "/placeholder-image.jpg")}
+                                    />
                                 </div>
                             )}
                         </div>
+
+                        <div className="pt-4 border-t border-border/40">
+                            <h3 className="text-base font-bold text-text-primary mb-5">Advanced SEO</h3>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">Meta Title</label>
+                            <input
+                                value={formData.metaTitle}
+                                onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                                placeholder="SEO title for search results"
+                                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">Meta Description</label>
+                            <textarea
+                                rows={3}
+                                value={formData.metaDescription}
+                                onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                                placeholder="SEO description (recommended under 160 characters)"
+                                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 resize-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">SEO Keywords</label>
+                            <input
+                                value={formData.seoKeywords}
+                                onChange={(e) => setFormData({ ...formData, seoKeywords: e.target.value })}
+                                placeholder="travel vaccine, pharmacy service, flu jab"
+                                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-text-secondary uppercase mb-1.5">Canonical URL</label>
+                            <input
+                                value={formData.canonicalUrl}
+                                onChange={(e) => setFormData({ ...formData, canonicalUrl: e.target.value })}
+                                placeholder="https://example.com/services/your-slug"
+                                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
+
+                        <label className="inline-flex items-center gap-2 text-sm text-text-secondary">
+                            <input
+                                type="checkbox"
+                                checked={formData.noIndex}
+                                onChange={(e) => setFormData({ ...formData, noIndex: e.target.checked })}
+                                className="rounded border-border"
+                            />
+                            No index (hide from search engines)
+                        </label>
                     </div>
                 </div>
             </div>

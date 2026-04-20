@@ -1,9 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Appointment from "@/models/Appointment";
+import "@/models/Vaccine";
+import type { AppointmentStatus } from "@/models/Appointment";
 import { releaseStock } from "@/lib/actions/inventory";
 import { sendEmail } from "@/lib/email";
 import { format } from "date-fns";
+import { handleConfirmedAppointmentAutomation } from "@/lib/appointmentAutomation";
+import Vaccine from "@/models/Vaccine";
+
+type BookingRequestBody = {
+    appointmentId?: string;
+    service?: { title?: string; price?: number };
+    date?: string;
+    time?: string;
+    customer?: {
+        name?: string;
+        email?: string;
+        phone?: string;
+        notes?: string;
+    };
+    paymentIntentId?: string;
+};
+
+function getErrorMessage(error: unknown) {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    return "Internal Server Error";
+}
+
+const APPOINTMENT_STATUSES: AppointmentStatus[] = [
+    "PENDING",
+    "BLOCKED",
+    "CONFIRMED",
+    "COMPLETED",
+    "CANCELLED",
+    "REJECTED",
+    "NO_SHOW",
+];
+
+function isAppointmentStatus(status: string): status is AppointmentStatus {
+    return APPOINTMENT_STATUSES.includes(status as AppointmentStatus);
+}
 
 // GET: Fetch appointments (admin use)
 export async function GET(request: NextRequest) {
@@ -14,7 +52,7 @@ export async function GET(request: NextRequest) {
         const status = searchParams.get("status");
         const limit = parseInt(searchParams.get("limit") || "50");
 
-        const filter: any = {};
+        const filter: Record<string, string> = {};
         if (status) filter.status = status;
 
         const appointments = await Appointment.find(filter)
@@ -27,9 +65,9 @@ export async function GET(request: NextRequest) {
             success: true,
             appointments: JSON.parse(JSON.stringify(appointments)),
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: getErrorMessage(error) },
             { status: 500 }
         );
     }
@@ -38,7 +76,7 @@ export async function GET(request: NextRequest) {
 // POST: Create booking for mock/free flow (when Stripe is in mock mode)
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const body: BookingRequestBody = await request.json();
         const { appointmentId, service, date, time, customer, paymentIntentId } = body;
 
         await connectToDatabase();
@@ -51,6 +89,12 @@ export async function POST(request: Request) {
                 appointment.paymentStatus = paymentIntentId ? "PAID" : "UNPAID";
                 appointment.lockedUntil = undefined;
                 await appointment.save();
+
+                const vaccine = await Vaccine.findById(appointment.vaccineId).select("title");
+                await handleConfirmedAppointmentAutomation({
+                    appointment,
+                    serviceTitle: vaccine?.title || "Vaccination",
+                });
 
                 // Send confirmation email
                 try {
@@ -79,7 +123,7 @@ export async function POST(request: Request) {
         }
 
         // Legacy flow: create a new booking directly (for backward compatibility)
-        const bookingDate = new Date(date);
+        const bookingDate = new Date(`${date}T00:00:00`);
         if (time) {
             const [hours, minutes] = time.split(":").map(Number);
             bookingDate.setHours(hours, minutes);
@@ -87,26 +131,26 @@ export async function POST(request: Request) {
 
         const { default: Booking } = await import("@/models/Booking");
 
-        const newBooking = await Booking.create({
-            customerName: customer.name,
-            customerEmail: customer.email,
-            customerPhone: customer.phone || "Not provided",
+        await Booking.create({
+            customerName: customer?.name || "Unknown",
+            customerEmail: customer?.email || "unknown@example.com",
+            customerPhone: customer?.phone || "Not provided",
             serviceName: service?.title || "Unknown",
             servicePrice: service?.price || 0,
             bookingDate,
             status: "confirmed",
             paymentStatus: paymentIntentId ? "paid" : "unpaid",
             paymentIntentId,
-            notes: customer.notes || undefined,
+            notes: customer?.notes || undefined,
         });
 
         // Send confirmation email
         try {
             const emailHtml = `
                 <h1>Booking Confirmation</h1>
-                <p>Dear ${customer.name},</p>
+                <p>Dear ${customer?.name || "Customer"},</p>
                 <p>Your appointment for <strong>${service?.title}</strong> has been confirmed.</p>
-                <p><strong>Date:</strong> ${format(new Date(date), "EEEE, d MMMM yyyy")}</p>
+                <p><strong>Date:</strong> ${format(new Date(date || bookingDate), "EEEE, d MMMM yyyy")}</p>
                 <p><strong>Time:</strong> ${time}</p>
                 <p><strong>Location:</strong> Clarke & Coleman Pharmacy, London</p>
                 <br/>
@@ -114,8 +158,8 @@ export async function POST(request: Request) {
             `;
 
             await sendEmail({
-                to: customer.email,
-                subject: `Appointment Confirmed - ${customer.name}`,
+                to: customer?.email || "",
+                subject: `Appointment Confirmed - ${customer?.name || "Customer"}`,
                 html: emailHtml,
             });
         } catch (emailError) {
@@ -123,10 +167,10 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({ success: true, message: "Booking created" });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error creating booking:", error);
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: getErrorMessage(error) },
             { status: 500 }
         );
     }
@@ -135,12 +179,19 @@ export async function POST(request: Request) {
 // PATCH: Update appointment status (admin action)
 export async function PATCH(request: Request) {
     try {
-        const body = await request.json();
+        const body: { appointmentId?: string; status?: string } = await request.json();
         const { appointmentId, status } = body;
 
         if (!appointmentId || !status) {
             return NextResponse.json(
                 { error: "appointmentId and status are required" },
+                { status: 400 }
+            );
+        }
+
+        if (!isAppointmentStatus(status)) {
+            return NextResponse.json(
+                { error: "Invalid appointment status" },
                 { status: 400 }
             );
         }
@@ -178,9 +229,9 @@ export async function PATCH(request: Request) {
         await appointment.save();
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: getErrorMessage(error) },
             { status: 500 }
         );
     }

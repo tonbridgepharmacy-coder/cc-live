@@ -24,9 +24,6 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
                     <p className="text-xs text-text-muted">
                         Authorized personnel only. If you are not an administrator, please return to the main site.
                     </p>
-                    <div className="mt-4 p-2 bg-red-50 text-red-600 text-[10px] break-all font-mono rounded">
-                        DEBUG: AUTH_URL is currently '{process.env.AUTH_URL}' | ERR: {searchParams.error || 'None'}
-                    </div>
                 </div>
             </div>
         </div>

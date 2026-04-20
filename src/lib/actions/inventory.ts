@@ -3,6 +3,7 @@
 import connectToDatabase from "@/lib/db";
 import Batch, { IBatch } from "@/models/Batch";
 import InventoryLog from "@/models/InventoryLog";
+import "@/models/Vaccine";
 import { revalidatePath } from "next/cache";
 import mongoose from "mongoose";
 
@@ -309,4 +310,91 @@ export async function getExpiringBatches(daysAhead: number = 30) {
         .lean();
 
     return JSON.parse(JSON.stringify(batches));
+}
+
+/**
+ * Get inventory status summary for all vaccines.
+ */
+export async function getVaccineInventoryStatus() {
+    const conn = await connectToDatabase();
+    if (!conn) return [];
+
+    const Vaccine = (await import("@/models/Vaccine")).default;
+    const vaccines = await Vaccine.find({})
+        .select("title status reorderLevel")
+        .sort({ title: 1 })
+        .lean();
+
+    const stockStats = await Batch.aggregate([
+        {
+            $group: {
+                _id: "$vaccineId",
+                totalAvailable: { $sum: "$quantityAvailable" },
+                totalReserved: { $sum: "$quantityReserved" },
+                totalStock: { $sum: "$quantityTotal" },
+                batchCount: { $sum: 1 },
+            },
+        },
+    ]);
+
+    const nextExpiry = await Batch.aggregate([
+        {
+            $match: {
+                status: "active",
+                quantityAvailable: { $gt: 0 },
+                expiryDate: { $gt: new Date() },
+            },
+        },
+        {
+            $group: {
+                _id: "$vaccineId",
+                nextExpiryDate: { $min: "$expiryDate" },
+            },
+        },
+    ]);
+
+    const statsMap = new Map<string, any>();
+    for (const item of stockStats) {
+        statsMap.set(item._id.toString(), item);
+    }
+
+    const expiryMap = new Map<string, Date>();
+    for (const item of nextExpiry) {
+        expiryMap.set(item._id.toString(), item.nextExpiryDate);
+    }
+
+    return vaccines.map((vaccine: any) => {
+        const key = vaccine._id.toString();
+        const stats = statsMap.get(key);
+
+        const totalAvailable = stats?.totalAvailable ?? 0;
+        const totalReserved = stats?.totalReserved ?? 0;
+        const totalStock = stats?.totalStock ?? 0;
+        const batchCount = stats?.batchCount ?? 0;
+        const reorderLevel = vaccine.reorderLevel ?? 10;
+
+        let inventoryStatus: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" | "NOT_CONFIGURED" =
+            "IN_STOCK";
+
+        if (batchCount === 0) {
+            inventoryStatus = "NOT_CONFIGURED";
+        } else if (totalAvailable <= 0) {
+            inventoryStatus = "OUT_OF_STOCK";
+        } else if (totalAvailable <= reorderLevel) {
+            inventoryStatus = "LOW_STOCK";
+        }
+
+        return {
+            vaccineId: vaccine._id,
+            vaccineName: vaccine.title,
+            publishStatus: vaccine.status,
+            reorderLevel,
+            totalAvailable,
+            totalReserved,
+            totalStock,
+            batchCount,
+            nextExpiryDate: expiryMap.get(key) || null,
+            inventoryStatus,
+        };
+    });
 }

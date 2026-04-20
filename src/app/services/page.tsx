@@ -3,6 +3,7 @@ import Image from "next/image";
 import { getCategories } from "@/lib/actions/category";
 import { getPublishedServices } from "@/lib/actions/service";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -95,7 +96,7 @@ export default async function ServicesPage() {
                                                     {service.title}
                                                 </h3>
                                                 <p className="text-text-secondary line-clamp-3 text-sm leading-relaxed mb-6 flex-grow">
-                                                    {service.shortDescription}
+                                                    {truncateText(stripHtmlTags(service.shortDescription || ""), 140)}
                                                 </p>
 
                                                 <div className="mt-auto flex items-center text-primary group-hover:text-accent font-semibold text-sm gap-2 transition-colors">

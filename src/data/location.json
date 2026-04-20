@@ -1,0 +1,35 @@
+{
+  "name": "Clarke & Coleman Pharmacy",
+  "tagline": "Visit Clarke & Coleman Pharmacy",
+  "badge": "Find Us",
+  "description": "Conveniently located in Tonbridge, Kent — come see us in person or get directions right from here.",
+
+  "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2489.1884178253!2d0.2729491!3d51.1970069!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47df4f4bb6cd594b%3A0x8448b81aaf55ded8!2sClarke%20%26%20Coleman%20Pharmacy!5e0!3m2!1sen!2suk!4v1713600000000!5m2!1sen!2suk",
+  "mapsLink": "https://maps.app.goo.gl/kyinhZ9Wx2pMkkpMA",
+  "iframeTitle": "Clarke & Coleman Pharmacy — Google Maps",
+  "mapLabelPill": "Clarke & Coleman Pharmacy",
+
+  "address": {
+    "label": "Our Address",
+    "line1": "Clarke & Coleman Pharmacy",
+    "line2": "Tonbridge, Kent",
+    "line3": "United Kingdom"
+  },
+
+  "phone": {
+    "label": "Phone",
+    "display": "01732 771190",
+    "href": "tel:01732771190"
+  },
+
+  "hours": {
+    "label": "Hours",
+    "weekdays": "Mon–Fri: 9am – 6:30pm",
+    "saturday": "Sat: 9am – 1pm"
+  },
+
+  "cta": {
+    "directions": "Get Directions",
+    "openInMaps": "Open in Google Maps"
+  }
+}

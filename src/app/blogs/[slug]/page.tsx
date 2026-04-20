@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ArrowLeft, Calendar, User, Clock, Share2, Tag } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -18,11 +19,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
     const blog = res.blog;
     const title = blog.metaTitle || blog.title;
-    const description = blog.metaDescription || blog.excerpt;
+    const description = blog.metaDescription || truncateText(stripHtmlTags(blog.excerpt || ""), 160);
 
     return {
         title,
         description,
+        keywords: blog.seoKeywords,
+        alternates: blog.canonicalUrl ? { canonical: blog.canonicalUrl } : undefined,
+        robots: blog.noIndex ? { index: false, follow: false } : undefined,
         openGraph: {
             title,
             description,
@@ -62,7 +66,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "headline": blog.metaTitle || blog.title,
-        "description": blog.metaDescription || blog.excerpt,
+        "description": blog.metaDescription || truncateText(stripHtmlTags(blog.excerpt || ""), 160),
         "image": blog.image,
         "author": {
             "@type": "Person",

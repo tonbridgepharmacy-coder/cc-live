@@ -4,6 +4,12 @@ export const authConfig = {
     pages: {
         signIn: "/auth/login",
     },
+    session: {
+        strategy: "jwt",
+        maxAge: parseInt(process.env.SESSION_MAX_AGE || "2592000"), // 30 days default
+        updateAge: parseInt(process.env.SESSION_UPDATE_AGE || "86400"), // 24 hours default
+    },
+    debug: process.env.AUTH_DEBUG === "true",
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
@@ -45,5 +51,6 @@ export const authConfig = {
         },
     },
     providers: [], // Providers configured in auth.ts
-    secret: process.env.AUTH_SECRET,
+    secret: process.env.JWT_SECRET || process.env.AUTH_SECRET,
 } satisfies NextAuthConfig;
+

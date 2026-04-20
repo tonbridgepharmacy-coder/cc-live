@@ -4,19 +4,47 @@ import { useState } from "react";
 import { updatePageSetting } from "@/lib/actions/pageSettings";
 import { IPageSetting } from "@/models/PageSetting";
 import { Loader2, Save, ImageIcon } from "lucide-react";
+import { uploadImage } from "@/lib/actions/upload";
 
 export default function SettingsClient({ initialData, pageId }: { initialData: IPageSetting | null, pageId: string }) {
     const [isLoading, setIsLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const [message, setMessage] = useState('');
     const [formData, setFormData] = useState({
         bannerImage: initialData?.bannerImage || '',
         bannerText: initialData?.bannerText || ''
     });
 
+    const handleBannerUpload = async (file: File) => {
+        setIsUploading(true);
+        setMessage('');
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await uploadImage(fd);
+            if (!res.success || !res.url) {
+                setMessage(`Error: ${res.error || 'Upload failed'}`);
+                return;
+            }
+            setFormData(prev => ({ ...prev, bannerImage: res.url! }));
+        } catch (err) {
+            console.error('Banner upload error:', err);
+            setMessage('Error: Upload failed');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setMessage('');
+
+        if (!formData.bannerImage) {
+            setMessage('Error: Please upload a banner image');
+            setIsLoading(false);
+            return;
+        }
 
         const res = await updatePageSetting(pageId, formData);
         if (res.success) {
@@ -53,10 +81,10 @@ export default function SettingsClient({ initialData, pageId }: { initialData: I
                     />
                 </div>
 
-                {/* Banner Image URL */}
+                {/* Banner Image Upload */}
                 <div className="space-y-3">
                     <label className="block text-sm font-semibold text-gray-900">
-                        Banner Image (URL)
+                        Banner Image
                     </label>
                     <div className="flex gap-3">
                         <div className="relative flex-grow">
@@ -64,15 +92,22 @@ export default function SettingsClient({ initialData, pageId }: { initialData: I
                                 <ImageIcon className="h-5 w-5 text-gray-400" />
                             </div>
                             <input
-                                type="url"
-                                required
-                                value={formData.bannerImage}
-                                onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
+                                type="file"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    await handleBannerUpload(file);
+                                    e.target.value = '';
+                                }}
+                                disabled={isUploading || isLoading}
                                 className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-gray-50 focus:bg-white"
-                                placeholder="https://example.com/banner.jpg"
                             />
                         </div>
                     </div>
+                    <p className="text-xs text-gray-500">
+                        {isUploading ? 'Uploading...' : 'Upload an image file (recommended 21:9)'}
+                    </p>
                 </div>
 
                 {/* Image Preview */}

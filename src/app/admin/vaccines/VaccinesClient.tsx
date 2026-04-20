@@ -1,12 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Plus, Edit2, Trash2, CheckCircle2, Clock } from "lucide-react";
 import { deleteVaccine } from "@/lib/actions/vaccine";
 import { useRouter } from "next/navigation";
 
-export default function VaccinesClient({ initialData }: { initialData: any[] }) {
+type VaccineListItem = {
+    _id: string;
+    title: string;
+    slug: string;
+    cardImage?: unknown;
+    category?: { name?: string } | null;
+    price?: number | string;
+    rating?: number | null;
+    status?: "published" | "draft" | string;
+};
+
+function normalizeImageSrc(src: unknown) {
+    if (typeof src !== "string") return "/placeholder-image.jpg";
+    const trimmed = src.trim();
+    if (!trimmed) return "/placeholder-image.jpg";
+
+    const normalizedSlashes = trimmed.replace(/\\/g, "/");
+    if (normalizedSlashes.startsWith("//")) {
+        return `https:${normalizedSlashes}`;
+    }
+
+    if (
+        normalizedSlashes.startsWith("http://") ||
+        normalizedSlashes.startsWith("https://")
+    ) {
+        try {
+            return new URL(normalizedSlashes).toString();
+        } catch {
+            return "/placeholder-image.jpg";
+        }
+    }
+
+    if (normalizedSlashes.startsWith("/")) {
+        return normalizedSlashes;
+    }
+
+    if (normalizedSlashes.startsWith("public/")) {
+        return `/${normalizedSlashes.slice("public/".length)}`;
+    }
+
+    return `/${normalizedSlashes}`;
+}
+
+export default function VaccinesClient({ initialData }: { initialData: VaccineListItem[] }) {
     const router = useRouter();
 
     const handleDelete = async (id: string, title: string) => {
@@ -52,11 +94,14 @@ export default function VaccinesClient({ initialData }: { initialData: any[] }) 
                                     <td className="py-4 px-6">
                                         <div className="flex items-center gap-4">
                                             <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-border">
-                                                <Image
-                                                    src={vaccine.cardImage || "/placeholder-image.jpg"}
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={normalizeImageSrc(vaccine.cardImage)}
                                                     alt={vaccine.title}
-                                                    fill
-                                                    className="object-cover"
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = "/placeholder-image.jpg";
+                                                    }}
                                                 />
                                             </div>
                                             <div>
