@@ -9,6 +9,11 @@ export interface IService extends Document {
     cardImage: string;
     shortDescription: string;
     content: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    seoKeywords?: string[];
+    canonicalUrl?: string;
+    noIndex?: boolean;
     status: 'draft' | 'published';
     createdAt: Date;
     updatedAt: Date;
@@ -24,6 +29,11 @@ const ServiceSchema = new Schema(
         cardImage: { type: String, required: true },
         shortDescription: { type: String, required: true },
         content: { type: String, required: true },
+        metaTitle: { type: String },
+        metaDescription: { type: String },
+        seoKeywords: { type: [String] },
+        canonicalUrl: { type: String },
+        noIndex: { type: Boolean, default: false },
         status: { type: String, enum: ['draft', 'published'], default: 'draft' },
     },
     { timestamps: true }

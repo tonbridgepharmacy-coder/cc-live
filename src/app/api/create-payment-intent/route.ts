@@ -3,8 +3,9 @@ import { stripe } from "@/lib/stripe";
 import connectToDatabase from "@/lib/db";
 import Appointment from "@/models/Appointment";
 import Vaccine from "@/models/Vaccine";
-import { reserveStock, getAvailableStock } from "@/lib/actions/inventory";
+import { reserveStock, releaseStock, getAvailableStock } from "@/lib/actions/inventory";
 import SlotConfig from "@/models/SlotConfig";
+import mongoose from "mongoose";
 
 export async function POST(request: Request) {
     try {
@@ -27,20 +28,17 @@ export async function POST(request: Request) {
             );
         }
 
+        if (!mongoose.Types.ObjectId.isValid(vaccineId)) {
+            return NextResponse.json(
+                { error: "Invalid appointment service selected. Please refresh and try again." },
+                { status: 400 }
+            );
+        }
+
         await connectToDatabase();
 
         // 1. Verify vaccine exists and get price
-        let vaccine;
-        
-        if (vaccineId === "mock_consultation") {
-            vaccine = {
-                _id: "mock_consultation",
-                price: 25,
-                title: "General Consultation (Test)"
-            } as any;
-        } else {
-            vaccine = await Vaccine.findById(vaccineId).catch(() => null);
-        }
+        const vaccine = await Vaccine.findById(vaccineId).catch(() => null);
 
         if (!vaccine) {
             return NextResponse.json(
@@ -50,7 +48,7 @@ export async function POST(request: Request) {
         }
 
         // 2. Check slot availability
-        const slotDate = new Date(date);
+        const slotDate = new Date(`${date}T00:00:00`);
         slotDate.setHours(0, 0, 0, 0);
 
         let config = await SlotConfig.findOne();
@@ -58,7 +56,33 @@ export async function POST(request: Request) {
             config = await SlotConfig.create({});
         }
 
-        // Count existing confirmed + locked bookings for this slot
+        // ─── Cleanup: Cancel expired PENDING appointments to free slots ───
+        const expiredPending = await Appointment.find({
+            status: "PENDING",
+            lockedUntil: { $lte: new Date() },
+        });
+
+        for (const expired of expiredPending) {
+            // Release inventory if batch was reserved
+            if (expired.batchId) {
+                try {
+                    await releaseStock(
+                        expired.vaccineId.toString(),
+                        expired.batchId.toString(),
+                        expired._id.toString()
+                    );
+                } catch (e) {
+                    console.error(`Failed to release stock for expired appointment ${expired._id}:`, e);
+                }
+            }
+            expired.status = "CANCELLED";
+            expired.paymentStatus = "FAILED";
+            expired.lockedUntil = undefined;
+            await expired.save();
+            console.log(`🧹 Cleaned up expired PENDING appointment: ${expired._id}`);
+        }
+
+        // Count existing confirmed + actively locked bookings for this slot
         const startOfDay = new Date(slotDate);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(slotDate);
@@ -70,12 +94,25 @@ export async function POST(request: Request) {
             status: { $in: ["CONFIRMED"] },
         });
 
+        const blockedCount = await Appointment.countDocuments({
+            slotDate: { $gte: startOfDay, $lte: endOfDay },
+            slotTime: time,
+            status: "BLOCKED",
+        });
+
         const lockedCount = await Appointment.countDocuments({
             slotDate: { $gte: startOfDay, $lte: endOfDay },
             slotTime: time,
             status: "PENDING",
             lockedUntil: { $gt: new Date() },
         });
+
+        if (blockedCount > 0) {
+            return NextResponse.json(
+                { error: "This time slot is no longer available" },
+                { status: 409 }
+            );
+        }
 
         if (existingCount + lockedCount >= config.capacityPerSlot) {
             return NextResponse.json(
@@ -84,8 +121,16 @@ export async function POST(request: Request) {
             );
         }
 
-        // 3. Check inventory availability (skip for mock)
-        if (vaccineId !== "mock_consultation") {
+        // 3. Check inventory availability
+        //    Skip if no batches exist for this vaccine (inventory not configured yet)
+        let hasInventory = false;
+        const Batch = (await import("@/models/Batch")).default;
+        const batchCount = await Batch.countDocuments({
+            vaccineId: new mongoose.Types.ObjectId(vaccineId),
+        });
+        hasInventory = batchCount > 0;
+
+        if (hasInventory) {
             const availableStock = await getAvailableStock(vaccineId);
             if (availableStock <= 0) {
                 return NextResponse.json(
@@ -113,11 +158,9 @@ export async function POST(request: Request) {
             lockedUntil,
         });
 
-        // 5. Reserve inventory (FIFO) -- Skip for mock
-        let stockResult: any = { success: true, batch: { _id: "mock_batch" } };
-        
-        if (vaccineId !== "mock_consultation") {
-            stockResult = await reserveStock(
+        // 5. Reserve inventory (FIFO) when inventory is configured
+        if (hasInventory) {
+            const stockResult = await reserveStock(
                 vaccineId,
                 appointment._id.toString()
             );
@@ -130,16 +173,23 @@ export async function POST(request: Request) {
                     { status: 409 }
                 );
             }
+
+            // Update appointment with batch ID
+            appointment.batchId = stockResult.batch._id;
+            await appointment.save();
         }
 
-        // Update appointment with batch ID
-        appointment.batchId = stockResult.batch._id;
-        await appointment.save();
-
         // 6. Check if we are in Mock Mode
+        const stripeKey = process.env.STRIPE_SECRET_KEY || "";
         const isMockMode =
-            !process.env.STRIPE_SECRET_KEY ||
-            process.env.STRIPE_SECRET_KEY.includes("mock_key");
+            !stripeKey ||
+            stripeKey.includes("mock_key") ||
+            stripeKey.includes("HERE") ||
+            stripeKey.includes("YOUR") ||
+            stripeKey.includes("PLACEHOLDER") ||
+            stripeKey.includes("xxx") ||
+            stripeKey === "sk_test_mock_key_for_build" ||
+            stripeKey.length < 20;
 
         if (isMockMode) {
             console.log("Mock Payment Mode Active — Appointment ID:", appointment._id);
@@ -172,10 +222,10 @@ export async function POST(request: Request) {
             appointmentId: appointment._id.toString(),
             isMock: false,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error creating payment intent:", error);
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: error instanceof Error ? error.message : "Internal Server Error" },
             { status: 500 }
         );
     }

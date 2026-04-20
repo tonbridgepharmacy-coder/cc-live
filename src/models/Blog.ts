@@ -16,6 +16,8 @@ export interface IBlog extends Document {
     metaTitle?: string;
     metaDescription?: string;
     seoKeywords?: string[];
+    canonicalUrl?: string;
+    noIndex?: boolean;
     viewCount: number;
     publishedAt: Date;
     createdAt: Date;
@@ -44,6 +46,8 @@ const BlogSchema = new Schema<IBlog>(
         metaTitle: { type: String },
         metaDescription: { type: String },
         seoKeywords: { type: [String] },
+        canonicalUrl: { type: String },
+        noIndex: { type: Boolean, default: false },
         viewCount: { type: Number, default: 0 },
         publishedAt: { type: Date, default: Date.now },
     },

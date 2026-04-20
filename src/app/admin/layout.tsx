@@ -17,16 +17,15 @@ export default async function AdminLayout({
 
     console.log("🛠️ AdminLayout Session:", JSON.stringify(session, null, 2));
 
-    // If no session or not admin, redirect to login
-    if (!session) {
+    // If no session, redirect to login
+    if (!session?.user) {
         redirect("/auth/login?error=NoSessionFound");
     }
-    if (!session.user) {
-        redirect("/auth/login?error=NoUserInSession");
-    }
+
     const role = (session.user as any).role;
     if (role !== "admin") {
-        redirect(`/auth/login?error=NotAdmin_RoleIs_${role}`);
+        console.log(`🔒 Access Denied: Role is ${role}`);
+        redirect("/auth/login?error=NotAdmin");
     }
 
     return (

@@ -3,8 +3,38 @@ import Link from "next/link";
 import { getServiceBySlug } from "@/lib/actions/service";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { Metadata } from "next";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+    const resolvedParams = await params;
+    const res = await getServiceBySlug(resolvedParams.slug);
+
+    if (!res.success || !res.service || res.service.status !== "published") {
+        return { title: "Not Found" };
+    }
+
+    const service = res.service;
+    const title = service.metaTitle || service.title;
+    const description =
+        service.metaDescription || truncateText(stripHtmlTags(service.shortDescription || ""), 160);
+
+    return {
+        title,
+        description,
+        keywords: service.seoKeywords,
+        alternates: service.canonicalUrl ? { canonical: service.canonicalUrl } : undefined,
+        robots: service.noIndex ? { index: false, follow: false } : undefined,
+        openGraph: {
+            title,
+            description,
+            images: service.bannerImage ? [{ url: service.bannerImage, alt: title }] : undefined,
+            type: "website",
+        },
+    };
+}
 
 export default async function ServiceDetailsPage({ params }: { params: { slug: string } }) {
     // Next.js 15+ requries awaiting dynamic params

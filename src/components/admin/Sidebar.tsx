@@ -20,6 +20,7 @@ import {
     ImageIcon, // Renamed to avoid collision with next/image
     Package,
     ClipboardList,
+    ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -35,6 +36,7 @@ const navLinks = [
     { name: "Vaccines Settings", href: "/admin/vaccines/settings", icon: FileText },
     { name: "Inventory", href: "/admin/inventory", icon: Package },
     { name: "Inventory Logs", href: "/admin/inventory/logs", icon: ClipboardList },
+    { name: "Login Audits", href: "/admin/login-audits", icon: ShieldCheck },
     { name: "Blogs", href: "/admin/blogs", icon: FileText },
     { name: "Career", href: "/admin/careers", icon: Briefcase },
     { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },

@@ -38,3 +38,33 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 qq
 8/04/2026
 g
+
+## Appointment Automation (Admin Email + Google Calendar)
+
+When a payment is successfully completed and an appointment becomes confirmed, the app can:
+
+- send an email notification to admin,
+- auto-create a Google Calendar event,
+- generate and include a Google Meet link.
+
+Set these environment variables:
+
+```bash
+ADMIN_NOTIFICATION_EMAIL=admin@example.com
+
+GOOGLE_CALENDAR_ID=primary
+GOOGLE_CALENDAR_TIMEZONE=Europe/London
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# Optional (for Google Workspace domain-wide delegation)
+GOOGLE_IMPERSONATED_USER=admin@yourdomain.com
+
+# Optional appointment duration in minutes (default: 30)
+APPOINTMENT_DURATION_MINUTES=30
+```
+
+Notes:
+
+- If Google Calendar credentials are missing, booking confirmation still works; calendar creation is skipped safely.
+- Appointment entries continue to appear in the admin appointments module as usual.

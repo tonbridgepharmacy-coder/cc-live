@@ -3,7 +3,7 @@ import ServiceForm from "@/components/admin/ServiceForm";
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditServicePage({ params }: { params: { id: string } }) {
+export default async function EditServicePage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
     const res = await getServiceById(resolvedParams.id);
 

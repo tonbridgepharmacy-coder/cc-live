@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getPublishedVaccines } from "@/lib/actions/vaccine";
 import { getPageSetting } from "@/lib/actions/pageSettings";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -107,7 +108,7 @@ export default async function VaccinesPage() {
                                                 )}
 
                                                 <p className="text-sm text-text-secondary line-clamp-2 mb-6 flex-grow">
-                                                    {vaccine.shortDescription}
+                                                    {truncateText(stripHtmlTags(vaccine.shortDescription || ""), 120)}
                                                 </p>
 
                                                 <div className="flex items-center text-primary group-hover:text-accent font-bold text-sm mt-auto group-hover:translate-x-2 transition-all">

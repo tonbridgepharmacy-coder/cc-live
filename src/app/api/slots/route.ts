@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
             config = await SlotConfig.create({});
         }
 
-        const requestedDate = new Date(dateStr);
+        const requestedDate = new Date(`${dateStr}T00:00:00`);
         const dayOfWeek = requestedDate.getDay(); // 0=Sun, 6=Sat
 
         // Check if it's a closed day
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
         const existingBookings = await Appointment.find({
             slotDate: { $gte: startOfDay, $lte: endOfDay },
-            status: { $in: ["PENDING", "CONFIRMED"] },
+            status: { $in: ["PENDING", "CONFIRMED", "BLOCKED"] },
         });
 
         // Also count locked slots (payment in progress)
@@ -89,6 +89,15 @@ export async function GET(request: NextRequest) {
 
         // Reduce availability based on bookings
         for (const slot of slots) {
+            const blockedCount = existingBookings.filter(
+                (b) => b.slotTime === slot.time && b.status === "BLOCKED"
+            ).length;
+
+            if (blockedCount > 0) {
+                slot.available = 0;
+                continue;
+            }
+
             const confirmedCount = existingBookings.filter(
                 (b) => b.slotTime === slot.time && b.status === "CONFIRMED"
             ).length;
@@ -102,21 +111,18 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Filter out fully-booked slots
-        const availableSlots = slots.filter((s) => s.available > 0);
-
         return NextResponse.json({
-            slots: availableSlots,
+            slots,
             date: dateStr,
             config: {
                 intervalMinutes: config.intervalMinutes,
                 capacityPerSlot: config.capacityPerSlot,
             },
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Slot availability error:", error);
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: error instanceof Error ? error.message : "Internal Server Error" },
             { status: 500 }
         );
     }

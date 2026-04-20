@@ -4,6 +4,16 @@ import User from "@/models/User";
 
 export async function GET() {
     try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (!adminEmail || !adminPassword) {
+            return NextResponse.json(
+                { error: "ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env" },
+                { status: 500 }
+            );
+        }
+
         const conn = await connectToDatabase();
         if (!conn) {
             return NextResponse.json(
@@ -21,11 +31,11 @@ export async function GET() {
             });
         }
 
-        // Create the initial admin user
+        // Create the initial admin user using env credentials
         const admin = await User.create({
             name: "Admin User",
-            email: "admin@clarkecoleman.co.uk",
-            password: "admin123", // Will be hashed by the pre-save hook
+            email: adminEmail,
+            password: adminPassword, // Will be hashed by the pre-save hook
             role: "admin",
         });
 

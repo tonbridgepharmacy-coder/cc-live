@@ -26,7 +26,9 @@ async function connectToDatabase() {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
-            serverSelectionTimeoutMS: 5000, // Timeout after 5s
+            serverSelectionTimeoutMS: parseInt(process.env.DB_CONNECTION_TIMEOUT || "5000"), // Server selection timeout
+            socketTimeoutMS: parseInt(process.env.DB_SOCKET_TIMEOUT || "45000"), // Socket timeout
+            maxPoolSize: parseInt(process.env.DB_POOL_SIZE || "10"), // Connection pool size
         };
 
         console.log("Attempting to connect to MongoDB...");

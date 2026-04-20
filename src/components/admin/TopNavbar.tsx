@@ -2,6 +2,7 @@
 
 import { Bell, Search, User, Menu } from "lucide-react";
 import { useState } from "react";
+import NotificationCenter from "./NotificationCenter";
 
 export default function TopNavbar({ user }: { user?: any }) {
     const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -28,11 +29,8 @@ export default function TopNavbar({ user }: { user?: any }) {
 
             {/* Right Actions */}
             <div className="ml-4 flex items-center gap-4">
-                {/* Notifications */}
-                <button className="relative p-2 text-text-secondary hover:text-primary hover:bg-primary/5 rounded-full transition-all duration-200 group">
-                    <Bell size={20} />
-                    <span className="absolute top-2 right-2 block h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white group-hover:scale-110 transition-transform"></span>
-                </button>
+                {/* Real-time Notifications */}
+                <NotificationCenter />
 
                 {/* Profile Dropdown Placeholder */}
                 <div className="flex items-center gap-3 pl-4 border-l border-slate-200">

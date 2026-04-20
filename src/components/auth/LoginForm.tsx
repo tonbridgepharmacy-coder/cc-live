@@ -33,7 +33,7 @@ export default function LoginForm() {
                     id="email"
                     type="email"
                     name="email"
-                    placeholder="admin@clarkecoleman.co.uk"
+                    placeholder="admin@clarkecoleman.com"
                     required
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />

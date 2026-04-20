@@ -1,0 +1,144 @@
+{
+  "organization": "Clarke & Coleman Pharmacy",
+  "effectiveDate": "2026-04-19",
+  "contact": {
+    "email": "tonbridgepharmacy@gmail.com",
+    "phone": "+44 1732 000000",
+    "address": "Tonbridge, Kent, United Kingdom"
+  },
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "summary": "We process personal data lawfully, fairly, and transparently to provide pharmacy and appointment services.",
+    "sections": [
+      {
+        "heading": "Information We Collect",
+        "points": [
+          "Identity and contact data such as name, email, phone number, and address.",
+          "Appointment and service data including booking date, time, selected service, and related notes.",
+          "Technical data such as browser information, IP address, and website usage events.",
+          "Payment reference information from payment processors; we do not store full card details."
+        ]
+      },
+      {
+        "heading": "How We Use Your Information",
+        "points": [
+          "To schedule, confirm, and manage appointments and related communication.",
+          "To send service notifications, reminders, confirmations, and operational emails.",
+          "To meet legal, regulatory, and healthcare record obligations.",
+          "To improve website performance, reliability, and user experience."
+        ]
+      },
+      {
+        "heading": "Data Sharing",
+        "points": [
+          "With trusted service providers such as payment, hosting, and email vendors under data processing agreements.",
+          "With regulators, legal authorities, or auditors when required by law.",
+          "Within internal care and operations teams on a need-to-know basis.",
+          "We do not sell personal data to third parties."
+        ]
+      },
+      {
+        "heading": "Retention",
+        "points": [
+          "We retain personal and appointment data only as long as needed for service delivery, legal, and compliance purposes.",
+          "Retention periods vary based on record category and regulatory obligations.",
+          "Expired or unnecessary data is securely deleted or anonymized."
+        ]
+      }
+    ]
+  },
+  "gdprPolicy": {
+    "title": "GDPR Policy",
+    "summary": "For UK/EU users, we follow GDPR principles including purpose limitation, minimization, and accountability.",
+    "sections": [
+      {
+        "heading": "Lawful Bases",
+        "points": [
+          "Contract: to provide booked appointments and requested services.",
+          "Legal obligation: for required healthcare, accounting, and compliance records.",
+          "Legitimate interests: for service quality, fraud prevention, and security.",
+          "Consent: for optional marketing or non-essential communication when requested."
+        ]
+      },
+      {
+        "heading": "Your Rights",
+        "points": [
+          "Right of access to your personal data.",
+          "Right to rectification of inaccurate or incomplete information.",
+          "Right to erasure where legally applicable.",
+          "Right to restrict or object to specific processing activities.",
+          "Right to data portability for eligible data.",
+          "Right to withdraw consent where processing depends on consent."
+        ]
+      },
+      {
+        "heading": "How to Exercise Rights",
+        "points": [
+          "Email tonbridgepharmacy@gmail.com with the subject 'Data Rights Request'.",
+          "Include your full name and enough information to verify your identity.",
+          "We respond within applicable legal timelines."
+        ]
+      }
+    ]
+  },
+  "returnPolicy": {
+    "title": "Return and Refund Policy",
+    "summary": "Returns and refunds depend on product type, safety requirements, and whether services were delivered.",
+    "sections": [
+      {
+        "heading": "Healthcare and Safety Products",
+        "points": [
+          "For hygiene and safety reasons, opened or used healthcare products are generally non-returnable unless faulty.",
+          "Sealed and unused eligible items may be returned within 14 days with proof of purchase.",
+          "Faulty or damaged products are eligible for replacement or refund under consumer law."
+        ]
+      },
+      {
+        "heading": "Appointment and Service Refunds",
+        "points": [
+          "If an appointment is canceled by the pharmacy, a full refund or reschedule option is offered.",
+          "If canceled by the client, refund eligibility may depend on cancellation notice and service type.",
+          "No-show or late cancellation may be non-refundable where clearly communicated in advance."
+        ]
+      },
+      {
+        "heading": "Refund Method and Timelines",
+        "points": [
+          "Approved refunds are returned to the original payment method.",
+          "Processing may take 5 to 10 business days depending on the payment provider."
+        ]
+      }
+    ]
+  },
+  "dataProtectionPolicy": {
+    "title": "Data Protection Policy",
+    "summary": "We apply technical and organizational controls to protect confidentiality, integrity, and availability of data.",
+    "sections": [
+      {
+        "heading": "Security Controls",
+        "points": [
+          "Role-based access controls and least-privilege permissions for staff systems.",
+          "Encryption in transit using HTTPS/TLS and secure credentials management.",
+          "Audit logging and monitoring for critical operational and administrative actions.",
+          "Regular patching, dependency updates, and vulnerability review practices."
+        ]
+      },
+      {
+        "heading": "Incident Handling",
+        "points": [
+          "Potential incidents are investigated promptly with risk assessment and containment.",
+          "Where required, affected parties and authorities are notified within legal timelines.",
+          "Corrective actions are documented and tracked to completion."
+        ]
+      },
+      {
+        "heading": "Staff and Governance",
+        "points": [
+          "Staff handling personal data are trained on confidentiality and data handling responsibilities.",
+          "Access to sensitive data is limited to authorized personnel with business need.",
+          "Policies are reviewed periodically and updated when legal or operational requirements change."
+        ]
+      }
+    ]
+  }
+}

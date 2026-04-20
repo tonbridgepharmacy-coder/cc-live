@@ -3,8 +3,38 @@ import Link from "next/link";
 import { getVaccineBySlug } from "@/lib/actions/vaccine";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Star, Clock, ShieldCheck } from "lucide-react";
+import { Metadata } from "next";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+    const resolvedParams = await params;
+    const res = await getVaccineBySlug(resolvedParams.slug);
+
+    if (!res.success || !res.vaccine || res.vaccine.status !== "published") {
+        return { title: "Not Found" };
+    }
+
+    const vaccine = res.vaccine;
+    const title = vaccine.metaTitle || vaccine.title;
+    const description =
+        vaccine.metaDescription || truncateText(stripHtmlTags(vaccine.shortDescription || ""), 160);
+
+    return {
+        title,
+        description,
+        keywords: vaccine.seoKeywords,
+        alternates: vaccine.canonicalUrl ? { canonical: vaccine.canonicalUrl } : undefined,
+        robots: vaccine.noIndex ? { index: false, follow: false } : undefined,
+        openGraph: {
+            title,
+            description,
+            images: vaccine.bannerImage ? [{ url: vaccine.bannerImage, alt: title }] : undefined,
+            type: "website",
+        },
+    };
+}
 
 export default async function VaccineDetailsPage({ params }: { params: { slug: string } }) {
     const resolvedParams = await params;

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 export const dynamic = 'force-dynamic';
 
@@ -83,7 +84,7 @@ export default async function BlogsPage() {
                                         </h3>
 
                                         <p className="text-slate-600 text-sm leading-relaxed mb-6 line-clamp-3 flex-grow">
-                                            {blog.excerpt}
+                                            {truncateText(stripHtmlTags(blog.excerpt || ""), 160)}
                                         </p>
 
                                         <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">

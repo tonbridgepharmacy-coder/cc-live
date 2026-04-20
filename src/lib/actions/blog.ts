@@ -3,6 +3,7 @@
 import mongoose from "mongoose";
 import Blog, { IBlog } from "@/models/Blog";
 import { revalidatePath } from "next/cache";
+import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 const MONGO_URI = process.env.MONGODB_URI;
 
@@ -53,7 +54,7 @@ export async function createBlog(data: Partial<IBlog>) {
             image: data.image || '/images/default-blog.jpg',
             cardImage: data.cardImage || data.image || '/images/default-blog.jpg',
             metaTitle: data.metaTitle || data.title,
-            metaDescription: data.metaDescription || data.excerpt,
+            metaDescription: data.metaDescription || truncateText(stripHtmlTags(data.excerpt || ""), 160),
         };
 
         const newBlog = await Blog.create(payload);
@@ -74,7 +75,9 @@ export async function updateBlog(id: string, data: Partial<IBlog>) {
 
         const payload = { ...data };
         if (payload.title && !payload.metaTitle) payload.metaTitle = payload.title;
-        if (payload.excerpt && !payload.metaDescription) payload.metaDescription = payload.excerpt;
+        if (payload.excerpt && !payload.metaDescription) {
+            payload.metaDescription = truncateText(stripHtmlTags(payload.excerpt), 160);
+        }
 
         const updatedBlog = await Blog.findByIdAndUpdate(id, payload, { new: true });
         if (!updatedBlog) throw new Error("Blog not found");

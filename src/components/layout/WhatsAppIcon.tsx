@@ -20,7 +20,11 @@ export default function WhatsAppIcon() {
     // Hide on admin pages
     if (pathname?.startsWith("/admin")) return null;
 
-    const whatsappNumber = siteConfig.phone.replace(/[^0-9]/g, "");
+    let whatsappNumber = siteConfig.phone.replace(/[^0-9]/g, "");
+    // WhatsApp wa.me expects an international-format number (no leading 0)
+    if (whatsappNumber.startsWith("0")) {
+        whatsappNumber = `44${whatsappNumber.slice(1)}`;
+    }
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hello! I'm interested in your services.`;
 
     return (

@@ -7,20 +7,88 @@ import {
     Users,
     Clock,
     CheckCircle2,
-    CreditCard,
+    Eye,
     LayoutDashboard,
     Calendar,
     MessageSquare,
     Briefcase,
-    FileText
+    FileText,
+    Syringe,
+    Boxes
 } from "lucide-react";
 
-export default function DashboardClient({ user }: { user?: any }) {
-    const metrics = [
-        { label: "Total Bookings", value: "1,284", icon: Clock, trend: { value: 12, isUp: true }, color: "blue" as const },
-        { label: "Pending Reviews", value: "14", icon: Users, trend: { value: 3, isUp: false }, color: "amber" as const },
-        { label: "Active Services", value: "12", icon: CheckCircle2, color: "emerald" as const },
-        { label: "Total Revenue", value: "£12,450", icon: CreditCard, trend: { value: 8, isUp: true }, color: "blue" as const },
+type DashboardMetrics = {
+    totalAppointments: number;
+    totalEnquiries: number;
+    visitors: number;
+    activeServices: number;
+    pendingReview: number;
+    totalVaccinesAvailable: number;
+    totalServices: number;
+};
+
+type RecentAppointment = {
+    patient: string;
+    service: string;
+    date: string;
+    time: string;
+    status: "Confirmed" | "Pending" | "Cancelled";
+};
+
+export default function DashboardClient({
+    user,
+    metrics,
+    recentAppointments,
+}: {
+    user?: { name?: string | null };
+    metrics: DashboardMetrics;
+    recentAppointments: RecentAppointment[];
+}) {
+    const formatMetricValue = (value: number) => value.toLocaleString("en-GB");
+
+    const metricCards = [
+        {
+            label: "No. of Appointments",
+            value: formatMetricValue(metrics.totalAppointments),
+            icon: Clock,
+            color: "blue" as const,
+        },
+        {
+            label: "Enquiries",
+            value: formatMetricValue(metrics.totalEnquiries),
+            icon: MessageSquare,
+            color: "amber" as const,
+        },
+        {
+            label: "Visitors",
+            value: formatMetricValue(metrics.visitors),
+            icon: Eye,
+            color: "blue" as const,
+        },
+        {
+            label: "Active Services",
+            value: formatMetricValue(metrics.activeServices),
+            icon: CheckCircle2,
+            color: "emerald" as const,
+        },
+        {
+            label: "Pending Review",
+            value: formatMetricValue(metrics.pendingReview),
+            icon: Users,
+            color: "amber" as const,
+        },
+        {
+            label: "Total Vaccines Available",
+            value: formatMetricValue(metrics.totalVaccinesAvailable),
+            icon: Syringe,
+            color: "emerald" as const,
+        },
+        {
+            label: "Total Services",
+            value: formatMetricValue(metrics.totalServices),
+            icon: Boxes,
+            color: "rose" as const,
+        },
     ];
 
     const managementActions = [
@@ -28,12 +96,12 @@ export default function DashboardClient({ user }: { user?: any }) {
         { title: "Appointments", description: "Manage patient visits and bookings.", href: "/admin/appointments", icon: Calendar, color: "emerald" as const },
         { title: "Enquiries", description: "Respond to patient enquiries and messages.", href: "/admin/enquiries", icon: MessageSquare, color: "amber" as const },
         { title: "Blogs", description: "Publish news, health articles and travel advice.", href: "/admin/blogs", icon: FileText, color: "slate" as const },
-        { title: "Career", description: "Review job applications and manage career listings.", href: "/admin/career", icon: Briefcase, color: "blue" as const },
+        { title: "Career", description: "Review job applications and manage career listings.", href: "/admin/careers", icon: Briefcase, color: "blue" as const },
     ];
 
     const appointmentColumns = [
         {
-            header: "Patient", accessor: "patient", render: (row: any) => (
+            header: "Patient", accessor: "patient", render: (row: RecentAppointment) => (
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
                         {row.patient.charAt(0)}
@@ -44,7 +112,7 @@ export default function DashboardClient({ user }: { user?: any }) {
         },
         { header: "Service", accessor: "service" },
         {
-            header: "Date & Time", accessor: "time", render: (row: any) => (
+            header: "Date & Time", accessor: "time", render: (row: RecentAppointment) => (
                 <div className="flex flex-col">
                     <span className="text-slate-900">{row.date}</span>
                     <span className="text-xs text-slate-500">{row.time}</span>
@@ -52,7 +120,7 @@ export default function DashboardClient({ user }: { user?: any }) {
             )
         },
         {
-            header: "Status", accessor: "status", render: (row: any) => (
+            header: "Status", accessor: "status", render: (row: RecentAppointment) => (
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${row.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-700' :
                     row.status === 'Pending' ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-700'
                     }`}>
@@ -62,13 +130,6 @@ export default function DashboardClient({ user }: { user?: any }) {
         },
     ];
 
-    const recentAppointments = [
-        { patient: "John Doe", service: "Travel Vaccination", date: "24 Feb 2026", time: "10:30 AM", status: "Confirmed" },
-        { patient: "Jane Smith", service: "Flu Jab", date: "24 Feb 2026", time: "11:15 AM", status: "Pending" },
-        { patient: "Robert Brown", service: "Health Checkup", date: "25 Feb 2026", time: "09:00 AM", status: "Confirmed" },
-        { patient: "Alice Wilson", service: "COVID Booster", date: "25 Feb 2026", time: "02:45 PM", status: "Confirmed" },
-    ];
-
     return (
         <div className="space-y-10 animate-fade-in">
             {/* Header */}
@@ -76,12 +137,12 @@ export default function DashboardClient({ user }: { user?: any }) {
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
                     Welcome back, {user?.name || 'Admin'}
                 </h1>
-                <p className="text-slate-500 mt-1">Here's what's happening at Clarke & Coleman today.</p>
+                <p className="text-slate-500 mt-1">Here&apos;s what&apos;s happening at Clarke &amp; Coleman today.</p>
             </div>
 
             {/* Metrics Grid */}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {metrics.map((metric, idx) => (
+                {metricCards.map((metric, idx) => (
                     <MetricCard key={idx} {...metric} />
                 ))}
             </div>

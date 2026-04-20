@@ -3,7 +3,7 @@ import VaccineForm from "@/components/admin/VaccineForm";
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditVaccinePage({ params }: { params: { id: string } }) {
+export default async function EditVaccinePage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = await params;
     const res = await getVaccineById(resolvedParams.id);
 

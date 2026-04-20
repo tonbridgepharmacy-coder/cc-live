@@ -11,6 +11,8 @@ import {
 import { format, addDays, startOfToday } from "date-fns";
 import { useSearchParams } from "next/navigation";
 
+const isMongoObjectId = (value: string) => /^[a-f\d]{24}$/i.test(value);
+
 // Initialize Stripe
 const stripePromise = loadStripe(
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_TYooMQauvdEDq54NiTphI7jx"
@@ -115,6 +117,9 @@ function BookingFormInner({
 
     const [step, setStep] = useState(1);
     const [selectedService, setSelectedService] = useState<any>(null);
+    const [availableDates, setAvailableDates] = useState<Date[]>([]);
+    const [datesLoading, setDatesLoading] = useState(false);
+    const [datesError, setDatesError] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState<Date>(addDays(startOfToday(), 1));
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -137,15 +142,6 @@ function BookingFormInner({
             if (!initialService && allServices.length > 0) {
                 initialService = allServices[0]; // Default to first available
             }
-            if (!initialService) {
-                // FALLBACK when database is completely empty so the form still works for testing
-                initialService = {
-                    id: "mock_consultation",
-                    type: "service",
-                    price: 25,
-                    title: "General Consultation (Test)",
-                };
-            }
             setSelectedService(initialService);
         }
     }, [serviceIdParam, allServices.length, selectedService]);
@@ -160,12 +156,64 @@ function BookingFormInner({
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
+    const canBookOnline = selectedService?.type === "vaccine";
+
     // Fetch available slots when date changes
     useEffect(() => {
         if (selectedDate) {
             fetchSlots(selectedDate);
         }
     }, [selectedDate]);
+
+    // Fetch available dates for the next X days
+    useEffect(() => {
+        let cancelled = false;
+
+        (async () => {
+            setDatesLoading(true);
+            setDatesError(null);
+            try {
+                const res = await fetch("/api/available-dates?days=14");
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data?.error || "Failed to load available dates");
+                }
+
+                const dates = Array.isArray(data?.dates)
+                    ? data.dates
+                          .map((d: any) =>
+                              d?.date ? new Date(`${String(d.date)}T00:00:00`) : null
+                          )
+                          .filter(Boolean)
+                    : [];
+
+                if (cancelled) return;
+                setAvailableDates(dates as Date[]);
+
+                // If the currently selected date isn't available, pick the first available one
+                if (dates.length > 0) {
+                    const selectedStr = format(selectedDate, "yyyy-MM-dd");
+                    const exists = (dates as Date[]).some(
+                        (dt) => format(dt, "yyyy-MM-dd") === selectedStr
+                    );
+                    if (!exists) {
+                        setSelectedDate(new Date(dates[0]));
+                    }
+                }
+            } catch (e: any) {
+                if (cancelled) return;
+                setAvailableDates([]);
+                setDatesError(e?.message || "Failed to load available dates");
+            } finally {
+                if (!cancelled) setDatesLoading(false);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const fetchSlots = async (date: Date) => {
         setSlotsLoading(true);
@@ -194,7 +242,7 @@ function BookingFormInner({
     };
 
     const handleStep1Submit = () => {
-        if (selectedService && selectedDate && selectedTime) {
+        if (selectedService && canBookOnline && selectedDate && selectedTime) {
             setStep(2);
         }
     };
@@ -202,6 +250,14 @@ function BookingFormInner({
     const handleDetailsSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedService) return;
+        if (!canBookOnline) {
+            setPaymentError("Online booking is available for vaccines only. Please contact the clinic for this service.");
+            return;
+        }
+        if (!selectedService.id || !isMongoObjectId(String(selectedService.id))) {
+            setPaymentError("Please select a valid appointment service before proceeding.");
+            return;
+        }
 
         setIsCreatingPayment(true);
         setPaymentError(null);
@@ -211,7 +267,7 @@ function BookingFormInner({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    vaccineId: selectedService.id,
+                    vaccineId: String(selectedService.id),
                     date: format(selectedDate, "yyyy-MM-dd"),
                     time: selectedTime,
                     customerName: formData.name,
@@ -324,9 +380,69 @@ function BookingFormInner({
             </div>
 
             <div className="p-6 sm:p-12 min-h-[500px]">
-                {/* ─── Stage 1: Date & Time (Selection UI Removed) ─── */}
+                {/* ─── Stage 1: Service + Date & Time ─── */}
                 {step === 1 && (
                     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Service Selector */}
+                        <section className="bg-slate-50 rounded-2xl border border-slate-100 p-6 sm:p-8">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm">0</div>
+                                <h2 className="text-xl font-black text-slate-900 tracking-tight">Select Service</h2>
+                            </div>
+
+                            <select
+                                value={selectedService?.id ? String(selectedService.id) : ""}
+                                onChange={(e) => {
+                                    const next = allServices.find((s: any) => String(s.id) === e.target.value);
+                                    setSelectedService(next || null);
+                                }}
+                                aria-label="Select service"
+                                title="Select service"
+                                className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold"
+                                disabled={allServices.length === 0}
+                            >
+                                <option value="" disabled>
+                                    {allServices.length === 0 ? "No services available" : "Choose a service"}
+                                </option>
+
+                                {vaccines.length > 0 && (
+                                    <optgroup label="Vaccines">
+                                        {vaccines.map((v: any) => {
+                                            const id = String(v._id || v.id);
+                                            return (
+                                                <option key={id} value={id}>
+                                                    {v.title} — £{v.price ?? 0}
+                                                </option>
+                                            );
+                                        })}
+                                    </optgroup>
+                                )}
+
+                                {services.length > 0 && (
+                                    <optgroup label="Services (call to book)">
+                                        {services.map((s: any) => {
+                                            const id = String(s._id || s.id);
+                                            return (
+                                                <option key={id} value={id}>
+                                                    {s.title}
+                                                </option>
+                                            );
+                                        })}
+                                    </optgroup>
+                                )}
+                            </select>
+
+                            {allServices.length === 0 ? (
+                                <p className="mt-4 text-sm font-black text-red-600">
+                                    No bookable service is available right now. Please contact the clinic.
+                                </p>
+                            ) : selectedService && !canBookOnline ? (
+                                <p className="mt-4 text-sm font-black text-amber-700">
+                                    Online booking is available for vaccines only.
+                                </p>
+                            ) : null}
+                        </section>
+
                         <div className="grid lg:grid-cols-2 gap-12">
                             {/* Date Picker */}
                             <section>
@@ -334,31 +450,43 @@ function BookingFormInner({
                                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm">1</div>
                                     <h2 className="text-xl font-black text-slate-900 tracking-tight">Pick a Date</h2>
                                 </div>
-                                <div className="grid grid-cols-7 gap-2">
-                                    {[...Array(14)].map((_, i) => {
-                                        const date = addDays(startOfToday(), i + 1);
-                                        const isSelected = date.toDateString() === selectedDate.toDateString();
-                                        const isSunday = date.getDay() === 0;
-                                        return (
-                                            <button
-                                                key={i}
-                                                onClick={() => !isSunday && setSelectedDate(date)}
-                                                disabled={isSunday}
-                                                className={`flex flex-col items-center py-3 rounded-xl transition-all ${
-                                                    isSelected
-                                                        ? "bg-primary text-white font-bold shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2"
-                                                        : isSunday
-                                                            ? "bg-slate-50 text-slate-300 cursor-not-allowed"
+                                {datesLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-2xl animate-pulse">
+                                        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
+                                        <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Loading dates...</span>
+                                    </div>
+                                ) : datesError ? (
+                                    <div className="text-center py-12 bg-red-50 rounded-2xl border border-red-100">
+                                        <p className="font-black text-red-700">Failed to load available dates</p>
+                                        <p className="text-xs text-red-500 mt-1 font-bold">{datesError}</p>
+                                    </div>
+                                ) : availableDates.length === 0 ? (
+                                    <div className="text-center py-12 bg-amber-50 rounded-2xl border border-amber-100">
+                                        <p className="font-black text-amber-700">No Dates Available</p>
+                                        <p className="text-xs text-amber-600 mt-1 font-bold">Please try again later.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-7 gap-2">
+                                        {availableDates.map((date) => {
+                                            const isSelected = date.toDateString() === selectedDate.toDateString();
+                                            return (
+                                                <button
+                                                    key={format(date, "yyyy-MM-dd")}
+                                                    onClick={() => setSelectedDate(date)}
+                                                    className={`flex flex-col items-center py-3 rounded-xl transition-all ${
+                                                        isSelected
+                                                            ? "bg-primary text-white font-bold shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2"
                                                             : "bg-white border border-slate-200 hover:border-primary/50 text-slate-600 font-bold"
-                                                }`}
-                                            >
-                                                <span className="text-[9px] uppercase font-black opacity-70 mb-1">{format(date, "EEE")}</span>
-                                                <span className="text-base">{format(date, "d")}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <p className="mt-4 text-[10px] text-slate-400 italic font-bold tracking-wide">* Showing next 14 days. We are closed on Sundays.</p>
+                                                    }`}
+                                                >
+                                                    <span className="text-[9px] uppercase font-black opacity-70 mb-1">{format(date, "EEE")}</span>
+                                                    <span className="text-base">{format(date, "d")}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                <p className="mt-4 text-[10px] text-slate-400 italic font-bold tracking-wide">* Showing only available dates.</p>
                             </section>
 
                             {/* Time Slots */}
@@ -387,19 +515,32 @@ function BookingFormInner({
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                                        {availableSlots.map((slot) => (
-                                            <button
-                                                key={slot.time}
-                                                onClick={() => setSelectedTime(slot.time)}
-                                                className={`py-3 rounded-xl text-sm font-black transition-all relative ${
-                                                    selectedTime === slot.time
-                                                        ? "bg-secondary text-white shadow-lg shadow-secondary/30 ring-2 ring-secondary ring-offset-2"
-                                                        : "bg-white border border-slate-200 hover:border-secondary/50 text-slate-700"
-                                                }`}
-                                            >
-                                                {slot.time}
-                                            </button>
-                                        ))}
+                                        {availableSlots.map((slot) => {
+                                            const isReserved = slot.available <= 0;
+                                            const isSelected = selectedTime === slot.time;
+
+                                            return (
+                                                <button
+                                                    key={slot.time}
+                                                    onClick={() => {
+                                                        if (!isReserved) setSelectedTime(slot.time);
+                                                    }}
+                                                    disabled={isReserved}
+                                                    className={`py-3 rounded-xl text-sm font-black transition-all relative ${
+                                                        isReserved
+                                                            ? "bg-red-50 border border-red-200 text-red-600 cursor-not-allowed"
+                                                            : isSelected
+                                                                ? "bg-secondary text-white shadow-lg shadow-secondary/30 ring-2 ring-secondary ring-offset-2"
+                                                                : "bg-white border border-slate-200 hover:border-secondary/50 text-slate-700"
+                                                    }`}
+                                                >
+                                                    <span className="block leading-none">{slot.time}</span>
+                                                    {isReserved && (
+                                                        <span className="block mt-1 text-[10px] uppercase tracking-wider">Reserved</span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </section>
@@ -410,14 +551,14 @@ function BookingFormInner({
                              <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Appointment for</span>
                                 <div className="flex items-center gap-3">
-                                     <span className="font-black text-slate-900 border-b-4 border-secondary/20 pb-1 text-lg tracking-tight">{selectedService?.title || "Selecting Service..."}</span>
+                                     <span className="font-black text-slate-900 border-b-4 border-secondary/20 pb-1 text-lg tracking-tight">{selectedService?.title || "Select a service above"}</span>
                                      {selectedService?.price > 0 && (
                                          <span className="bg-primary/10 text-primary px-3 py-1 rounded-xl text-xs font-black">£{selectedService.price}</span>
                                      )}
                                 </div>
                             </div>
                             <button
-                                disabled={!selectedService || !selectedTime}
+                                disabled={!selectedService || !canBookOnline || !selectedTime}
                                 onClick={handleStep1Submit}
                                 className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-14 py-5 rounded-2xl font-black text-xl shadow-2xl shadow-primary/30 disabled:opacity-50 disabled:shadow-none transition-all transform hover:-translate-y-1 active:scale-95"
                             >

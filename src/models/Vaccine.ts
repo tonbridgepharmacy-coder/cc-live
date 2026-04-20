@@ -9,6 +9,11 @@ export interface IVaccine extends Document {
     cardImage: string;
     shortDescription: string;
     content: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    seoKeywords?: string[];
+    canonicalUrl?: string;
+    noIndex?: boolean;
     price: number;
     crossedPrice?: number;
     rating?: number;
@@ -28,6 +33,11 @@ const vaccineSchema = new Schema<IVaccine>(
         cardImage: { type: String, required: true },
         shortDescription: { type: String, required: true },
         content: { type: String, required: true },
+        metaTitle: { type: String },
+        metaDescription: { type: String },
+        seoKeywords: { type: [String] },
+        canonicalUrl: { type: String },
+        noIndex: { type: Boolean, default: false },
         price: { type: Number, required: true },
         crossedPrice: { type: Number },
         rating: { type: Number, min: 0, max: 5 },
