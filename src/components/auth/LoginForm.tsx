@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { authenticate } from "@/app/lib/actions"; // We need to create this action
+import { authenticate } from "@/app/lib/actions";
 
 function LoginButton() {
     const { pending } = useFormStatus();
@@ -19,9 +19,39 @@ function LoginButton() {
 
 export default function LoginForm() {
     const [errorMessage, dispatch] = useActionState(authenticate, undefined);
+    
+    // Manage state for login credentials
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
+
+    // On mount, load stored credentials if they exist
+    useEffect(() => {
+        const storedEmail = localStorage.getItem("ccAdminEmail");
+        const storedPass = localStorage.getItem("ccAdminPass");
+        if (storedEmail && storedPass) {
+            try {
+                setEmail(atob(storedEmail));
+                setPassword(atob(storedPass));
+                setRememberMe(true);
+            } catch (e) {
+                console.error("Failed to parse stored credentials");
+            }
+        }
+    }, []);
+
+    const handleFormSubmit = () => {
+        if (rememberMe) {
+            localStorage.setItem("ccAdminEmail", btoa(email));
+            localStorage.setItem("ccAdminPass", btoa(password));
+        } else {
+            localStorage.removeItem("ccAdminEmail");
+            localStorage.removeItem("ccAdminPass");
+        }
+    };
 
     return (
-        <form action={dispatch} className="space-y-6">
+        <form action={dispatch} onSubmit={handleFormSubmit} className="space-y-6">
             <div>
                 <label
                     htmlFor="email"
@@ -33,6 +63,8 @@ export default function LoginForm() {
                     id="email"
                     type="email"
                     name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@clarkecoleman.com"
                     required
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -49,11 +81,26 @@ export default function LoginForm() {
                     id="password"
                     type="password"
                     name="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     minLength={6}
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
+            </div>
+
+            <div className="flex items-center">
+                <input
+                    id="rememberMe"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                />
+                <label htmlFor="rememberMe" className="ml-2 text-sm text-text-secondary select-none cursor-pointer">
+                    Keep me logged in (Save ID & Password)
+                </label>
             </div>
 
             {errorMessage && (

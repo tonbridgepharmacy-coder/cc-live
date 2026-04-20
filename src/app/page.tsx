@@ -4,6 +4,7 @@ import {
   testimonials,
 } from "@/lib/mock-data";
 import { getGalleryImages } from "@/lib/actions/gallery";
+import LocationMap from "@/components/ui/LocationMap";
 
 // ─── Inline Icons ────────────────────────────
 const ArrowRight = ({ className = "w-4 h-4" }: { className?: string }) => (
@@ -373,89 +374,74 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ═══ MAP & CTA ═══ */}
-      <section className="py-20 bg-background">
+      {/* ═══ LOCATION MAP ═══ */}
+      <LocationMap variant="landing" />
+
+      {/* ═══ CTA ═══ */}
+      <section className="py-20 bg-white">
         <div className="section-container section-padding">
-          <div className="grid lg:grid-cols-2 gap-10">
-            {/* Google Map Embed Placeholder */}
-            <div className="rounded-2xl overflow-hidden border border-border/30 shadow-sm">
-              <div className="aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-text-muted">
-                <div className="text-center">
-                  <svg className="w-12 h-12 mx-auto mb-3 text-text-muted/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          <div className="max-w-lg mx-auto lg:mx-0">
+            <SectionHeading
+              badge="Get in Touch"
+              title="Ready to Take the Next Step?"
+              description="Book a consultation with our expert team today. We're here to support your health journey."
+              align="left"
+            />
+            <div className="-mt-4 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <span className="text-sm">Google Map Embed</span>
-                  <br />
-                  <span className="text-xs">Configurable from Admin</span>
+                </div>
+                <div>
+                  <div className="text-xs text-text-muted">Call us</div>
+                  <a href={`tel:${siteConfig.phone}`} className="font-semibold text-text-primary hover:text-primary transition-colors">
+                    {siteConfig.phone}
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-xs text-text-muted">Email</div>
+                  <a href={`mailto:${siteConfig.email}`} className="font-semibold text-text-primary hover:text-primary transition-colors">
+                    {siteConfig.email}
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <ClockIcon />
+                </div>
+                <div>
+                  <div className="text-xs text-text-muted">Opening Hours</div>
+                  <div className="font-semibold text-text-primary text-sm">
+                    {siteConfig.openingHours}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Final CTA */}
-            <div className="flex flex-col justify-center">
-              <SectionHeading
-                badge="Get in Touch"
-                title="Ready to Take the Next Step?"
-                description="Book a consultation with our expert team today. We're here to support your health journey."
-                align="left"
-              />
-              <div className="-mt-4 space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs text-text-muted">Call us</div>
-                    <a href={`tel:${siteConfig.phone}`} className="font-semibold text-text-primary hover:text-primary transition-colors">
-                      {siteConfig.phone}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-xs text-text-muted">Email</div>
-                    <a href={`mailto:${siteConfig.email}`} className="font-semibold text-text-primary hover:text-primary transition-colors">
-                      {siteConfig.email}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <ClockIcon />
-                  </div>
-                  <div>
-                    <div className="text-xs text-text-muted">Opening Hours</div>
-                    <div className="font-semibold text-text-primary text-sm">
-                      {siteConfig.openingHours}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-8">
-                <Link
-                  href="/book"
-                  className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-light text-white px-7 py-3.5 rounded-xl text-sm font-semibold shadow-lg shadow-accent/20 hover:shadow-xl transition-all"
-                >
-                  Book Appointment
-                </Link>
-                <Link
-                  href="/about"
-                  className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-text-primary px-6 py-3 rounded-xl text-sm font-semibold border border-border shadow-sm transition-all"
-                >
-                  Contact Us
-                </Link>
-              </div>
+            <div className="flex gap-3 mt-8">
+              <Link
+                href="/book"
+                className="inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-light text-white px-7 py-3.5 rounded-xl text-sm font-semibold shadow-lg shadow-accent/20 hover:shadow-xl transition-all"
+              >
+                Book Appointment
+              </Link>
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-text-primary px-6 py-3 rounded-xl text-sm font-semibold border border-border shadow-sm transition-all"
+              >
+                Contact Us
+              </Link>
             </div>
           </div>
         </div>

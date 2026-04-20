@@ -4,10 +4,14 @@ import type { Metadata } from "next";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { siteConfig } from "@/config/site";
 import EnquiryForm from "@/components/ui/EnquiryForm";
+import LocationMap from "@/components/ui/LocationMap";
+import aboutData from "@/data/about.json";
+
+const { hero, story, values, commitment, enquiry, cta } = aboutData;
 
 export const metadata: Metadata = {
-    title: "About Us | Clarke & Coleman Pharmacy",
-    description: "Learn about Ankit Tyagi's vision for Clarke & Coleman Pharmacy and our commitment to Integrated Care, Excellence, and Community Health in Tonbridge.",
+    title: aboutData.metadata.title,
+    description: aboutData.metadata.description,
 };
 
 // ─── Icons ───────────────────────────────────
@@ -41,6 +45,16 @@ const ExcellenceIcon = () => (
     </svg>
 );
 
+// Maps value key → icon component
+const VALUE_ICONS: Record<string, React.ReactNode> = {
+    integrity: <IntegrityIcon />,
+    care: <CareIcon />,
+    accountability: <AccountabilityIcon />,
+    respect: <RespectIcon />,
+    excellence: <ExcellenceIcon />,
+    integrated: null, // rendered separately as text badge
+};
+
 export default function AboutPage() {
     return (
         <main className="bg-white">
@@ -51,21 +65,21 @@ export default function AboutPage() {
 
                 <div className="section-container section-padding">
                     <div className="max-w-4xl">
-                        <Breadcrumb items={[{ label: "About Us" }]} />
+                        <Breadcrumb items={[{ label: hero.breadcrumb }]} />
                         <div className="mt-8 relative h-20 w-20">
                             <Image
                                 src="/logo.png"
-                                alt="Pharmacy Logo"
+                                alt={hero.logoAlt}
                                 fill
                                 className="object-contain"
                             />
                         </div>
                         <h1 className="mt-8 text-4xl sm:text-5xl lg:text-7xl font-bold text-text-primary tracking-tight leading-[1.1]">
-                            Protecting the health of our <span className="text-primary italic">community</span>.
+                            {hero.headingPlain}{" "}
+                            <span className="text-primary italic">{hero.headingHighlight}</span>.
                         </h1>
                         <p className="mt-8 text-lg sm:text-xl text-text-secondary leading-relaxed max-w-2xl">
-                            Welcome to Clarke & Coleman Pharmacy in Tonbridge, where premium care for you,
-                            your family, and your workplace is our promise.
+                            {hero.subtext}
                         </p>
                     </div>
                 </div>
@@ -79,15 +93,17 @@ export default function AboutPage() {
                             <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
                                 <img
                                     src="https://images.unsplash.com/photo-1559839734-2b71f1e59816?auto=format&fit=crop&w=1200&q=80"
-                                    alt="Ankit Tyagi - Pharmacist"
+                                    alt={story.founderImageAlt}
                                     className="w-full h-full object-cover"
                                 />
                             </div>
                             <div className="absolute -bottom-8 -right-8 bg-accent text-white p-8 rounded-3xl shadow-2xl shadow-accent/20 max-w-xs hidden sm:block">
-                                <p className="text-sm font-medium opacity-80 uppercase tracking-widest mb-2">Experience</p>
-                                <p className="text-3xl font-bold">17+ Years</p>
+                                <p className="text-sm font-medium opacity-80 uppercase tracking-widest mb-2">
+                                    {story.experienceBadge.label}
+                                </p>
+                                <p className="text-3xl font-bold">{story.experienceBadge.years}</p>
                                 <p className="mt-2 text-white/90 text-sm leading-relaxed">
-                                    Dedicated to transforming healthcare delivery at the community level.
+                                    {story.experienceBadge.description}
                                 </p>
                             </div>
                         </div>
@@ -95,36 +111,29 @@ export default function AboutPage() {
                         <div className="space-y-8">
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-semibold border border-accent/20 shadow-sm">
                                 <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
                                 </span>
-                                Meet Our Founder
+                                {story.founderBadge}
                             </div>
 
                             <h2 className="text-3xl sm:text-4xl font-bold text-text-primary leading-tight">
-                                "My passion has always been to make healthcare accessible, personalized, and truly patient-centred."
+                                &ldquo;{story.quote}&rdquo;
                             </h2>
 
                             <div className="space-y-6 text-text-secondary leading-relaxed text-lg">
                                 <p>
-                                    My name is <span className="font-bold text-text-primary">Ankit Tyagi</span>, and I am delighted to introduce you to our pharmacy.
-                                    As a qualified pharmacist since 2009 and an Independent Pharmacist Prescriber, I bring over 17 years
-                                    of dedicated experience in transforming healthcare delivery.
+                                    My name is{" "}
+                                    <span className="font-bold text-text-primary">{story.founderName}</span>
+                                    {story.paragraphs[0].replace("{name}", "").trimStart()}
                                 </p>
-                                <p>
-                                    Throughout my career, I've had the privilege of leading innovative pharmacy services,
-                                    championing integrated care within the NHS, and representing the community pharmacy
-                                    voice in strategic healthcare discussions.
-                                </p>
-                                <p>
-                                    Now, as the proud owner of Clarke & Coleman Pharmacy, I'm bringing that same
-                                    commitment and expertise directly to you and your loved ones.
-                                </p>
+                                <p>{story.paragraphs[1]}</p>
+                                <p>{story.paragraphs[2]}</p>
                             </div>
 
                             <div className="pt-6 border-t border-border">
-                                <p className="text-text-primary font-bold text-lg">Ankit Tyagi</p>
-                                <p className="text-text-secondary">Independent Pharmacist Prescriber | Superintendent Pharmacist & Owner</p>
+                                <p className="text-text-primary font-bold text-lg">{story.founderName}</p>
+                                <p className="text-text-secondary">{story.founderRole}</p>
                             </div>
                         </div>
                     </div>
@@ -135,54 +144,31 @@ export default function AboutPage() {
             <section className="py-24 bg-background relative overflow-hidden">
                 <div className="section-container section-padding">
                     <div className="text-center max-w-3xl mx-auto mb-20">
-                        <h2 className="text-3xl sm:text-5xl font-bold text-text-primary mb-6">What We Stand For</h2>
+                        <h2 className="text-3xl sm:text-5xl font-bold text-text-primary mb-6">
+                            {values.heading}
+                        </h2>
                         <p className="text-lg text-text-secondary leading-relaxed">
-                            Since I qualified, I have learned to uphold five core values that define
-                            who I am as a healthcare professional and what this pharmacy stands for.
+                            {values.subtext}
                         </p>
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[
-                            {
-                                icon: <IntegrityIcon />,
-                                title: "Integrity",
-                                description: "We believe in honest, transparent healthcare. Every recommendation is in your best interest, backed by evidence."
-                            },
-                            {
-                                icon: <CareIcon />,
-                                title: "Care",
-                                description: "Compassion is at the heart of our practice. We take the time to listen, understand, and provide support beyond dispensing."
-                            },
-                            {
-                                icon: <AccountabilityIcon />,
-                                title: "Accountability",
-                                description: "We take responsibility for the care we provide, ensuring the highest standards of service and following through on commitments."
-                            },
-                            {
-                                icon: <RespectIcon />,
-                                title: "Respect",
-                                description: "Every patient deserves dignity. We value your time, your questions, and your individual health journey."
-                            },
-                            {
-                                icon: <ExcellenceIcon />,
-                                title: "Excellence",
-                                description: "Committed to the highest quality pharmaceutical care through continuous learning, innovation, and attention to detail."
-                            },
-                            {
-                                icon: <div className="p-2 bg-primary/10 rounded-lg text-primary font-bold text-xs">ICARE</div>,
-                                title: "Integrated Care",
-                                description: "Our approach combines clinical excellence with genuine care, ensuring every interaction is meaningful."
-                            }
-                        ].map((value, idx) => (
-                            <div key={idx} className="bg-white p-10 rounded-3xl border border-border/50 hover:shadow-xl hover:-translate-y-1 transition-all group">
+                        {values.items.map((value) => (
+                            <div
+                                key={value.key}
+                                className="bg-white p-10 rounded-3xl border border-border/50 hover:shadow-xl hover:-translate-y-1 transition-all group"
+                            >
                                 <div className="w-14 h-14 rounded-2xl bg-primary/5 text-primary flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-white transition-colors">
-                                    {value.icon}
+                                    {value.key === "integrated" ? (
+                                        <div className="p-2 bg-primary/10 rounded-lg text-primary font-bold text-xs group-hover:bg-white/20 group-hover:text-white">
+                                            {value.iconLabel}
+                                        </div>
+                                    ) : (
+                                        VALUE_ICONS[value.key]
+                                    )}
                                 </div>
                                 <h3 className="text-2xl font-bold text-text-primary mb-4">{value.title}</h3>
-                                <p className="text-text-secondary leading-relaxed">
-                                    {value.description}
-                                </p>
+                                <p className="text-text-secondary leading-relaxed">{value.description}</p>
                             </div>
                         ))}
                     </div>
@@ -198,20 +184,14 @@ export default function AboutPage() {
                         <div className="relative z-10 grid lg:grid-cols-2 gap-16 items-center">
                             <div>
                                 <h2 className="text-3xl sm:text-5xl font-bold mb-8 leading-tight">
-                                    Premium Care for You, Your Family, and Your Workplace.
+                                    {commitment.heading}
                                 </h2>
                                 <p className="text-white/70 text-lg leading-relaxed mb-10">
-                                    Our pharmacy is more than just a place to collect prescriptions—it's a
-                                    healthcare destination built on trust, expertise, and a deep commitment
-                                    to our community.
+                                    {commitment.subtext}
                                 </p>
                                 <div className="space-y-6">
-                                    {[
-                                        "Seamless healthcare centered around you",
-                                        "Expert advice and informed health decisions",
-                                        "Highest standard of pharmaceutical services"
-                                    ].map((item, id) => (
-                                        <div key={id} className="flex items-center gap-4">
+                                    {commitment.bullets.map((item) => (
+                                        <div key={item} className="flex items-center gap-4">
                                             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
                                                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -222,20 +202,24 @@ export default function AboutPage() {
                                     ))}
                                 </div>
                             </div>
+
                             <div className="bg-white/5 backdrop-blur-lg border border-white/10 p-10 rounded-3xl">
-                                <h3 className="text-2xl font-bold mb-6">Your Trusted Partner</h3>
+                                <h3 className="text-2xl font-bold mb-6">{commitment.quote.cardHeading}</h3>
                                 <p className="text-white/70 leading-relaxed mb-8">
-                                    "I believe healthcare should work seamlessly and always put you at the centre.
-                                    That's why I take the time to listen, answer your questions, and provide the
-                                    guidance you need to make informed health decisions."
+                                    {commitment.quote.text}
                                 </p>
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary">
-                                        <img src="https://images.unsplash.com/photo-1559839734-2b71f1e59816?auto=format&fit=crop&w=100&q=80" alt="Ankit Tyagi" />
+                                        <img
+                                            src="https://images.unsplash.com/photo-1559839734-2b71f1e59816?auto=format&fit=crop&w=100&q=80"
+                                            alt={commitment.quote.founderImageAlt}
+                                        />
                                     </div>
                                     <div>
-                                        <p className="font-bold">Ankit Tyagi</p>
-                                        <p className="text-xs text-white/50 tracking-widest uppercase">Owner & Pharmacist</p>
+                                        <p className="font-bold">{commitment.quote.founderName}</p>
+                                        <p className="text-xs text-white/50 tracking-widest uppercase">
+                                            {commitment.quote.founderRole}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -250,18 +234,17 @@ export default function AboutPage() {
                     <div className="max-w-5xl mx-auto bg-white rounded-[2.5rem] shadow-sm border border-border overflow-hidden">
                         <div className="grid lg:grid-cols-5">
                             <div className="lg:col-span-2 bg-primary p-12 lg:p-16 text-white text-center sm:text-left">
-                                <h2 className="text-3xl font-bold mb-6">Have a Question?</h2>
-                                <p className="text-white/70 leading-relaxed mb-12">
-                                    Your health journey starts here—and we're honoured to be part of it.
-                                    Reach out to us for any health advice or questions.
-                                </p>
+                                <h2 className="text-3xl font-bold mb-6">{enquiry.heading}</h2>
+                                <p className="text-white/70 leading-relaxed mb-12">{enquiry.subtext}</p>
                                 <div className="space-y-8">
                                     <div className="group flex items-center gap-4 cursor-pointer">
                                         <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center transition-transform group-hover:scale-110">
                                             <CareIcon />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-white/50 uppercase font-bold tracking-widest mb-1">Call Us</p>
+                                            <p className="text-xs text-white/50 uppercase font-bold tracking-widest mb-1">
+                                                {enquiry.contactLabels.call}
+                                            </p>
                                             <p className="font-bold text-lg">{siteConfig.phone}</p>
                                         </div>
                                     </div>
@@ -270,7 +253,9 @@ export default function AboutPage() {
                                             <div className="w-6 h-6 border-2 border-white rounded-md flex items-center justify-center font-bold">@</div>
                                         </div>
                                         <div>
-                                            <p className="text-xs text-white/50 uppercase font-bold tracking-widest mb-1">Email Us</p>
+                                            <p className="text-xs text-white/50 uppercase font-bold tracking-widest mb-1">
+                                                {enquiry.contactLabels.email}
+                                            </p>
                                             <p className="font-bold text-lg">{siteConfig.email}</p>
                                         </div>
                                     </div>
@@ -284,28 +269,39 @@ export default function AboutPage() {
                 </div>
             </section>
 
+            {/* ─── Location Map ─── */}
+            <LocationMap variant="about" />
+
             {/* ─── CTA ─── */}
             <section className="py-32 bg-white text-center relative">
                 <div className="section-container section-padding">
                     <h2 className="text-4xl sm:text-6xl font-bold text-text-primary mb-8 tracking-tighter">
-                        Ready to experience <br /> <span className="text-primary italic">Better Health?</span>
+                        {cta.headingPlain} <br />
+                        <span className="text-primary italic">{cta.headingHighlight}</span>
                     </h2>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                        <Link
-                            href="/book"
-                            className="w-full sm:w-auto px-10 py-5 bg-primary text-white rounded-2xl font-bold text-lg shadow-2xl hover:bg-primary-dark transition-all hover:-translate-y-1"
-                        >
-                            Book Appointment
-                        </Link>
-                        <Link
-                            href="/services"
-                            className="w-full sm:w-auto px-10 py-5 bg-background text-text-primary rounded-2xl font-bold text-lg hover:bg-border/30 transition-all"
-                        >
-                            Explore Services
-                        </Link>
+                        {cta.buttons.map((btn) => (
+                            <Link
+                                key={btn.href}
+                                href={btn.href}
+                                className={
+                                    btn.href === "/book"
+                                        ? "w-full sm:w-auto px-10 py-5 bg-primary text-white rounded-2xl font-bold text-lg shadow-2xl hover:bg-primary-dark transition-all hover:-translate-y-1"
+                                        : "w-full sm:w-auto px-10 py-5 bg-background text-text-primary rounded-2xl font-bold text-lg hover:bg-border/30 transition-all"
+                                }
+                            >
+                                {btn.label}
+                            </Link>
+                        ))}
                     </div>
                 </div>
-                <a href="https://www.techservenexus.com" target="_blank" className="absolute bottom-2 right-4 text-[10px] text-black/5 hover:text-black/20 select-none pointer-events-auto">Techserve Nexus</a>
+                <a
+                    href="https://www.techservenexus.com"
+                    target="_blank"
+                    className="absolute bottom-2 right-4 text-[10px] text-black/5 hover:text-black/20 select-none pointer-events-auto"
+                >
+                    Techserve Nexus
+                </a>
             </section>
         </main>
     );

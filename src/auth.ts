@@ -5,6 +5,7 @@ import { z } from "zod";
 import connectToDatabase from "@/lib/db";
 import User from "@/models/User";
 import { recordLoginAudit } from "@/lib/loginAudit";
+import LoginAudit from "@/models/LoginAudit";
 
 function resolveClientIp(req?: Request) {
     const xff = req?.headers.get("x-forwarded-for") || "";
@@ -52,6 +53,38 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                 }
 
                 const { email, password } = parsedCredentials.data;
+
+                // --- 1. Enforce Account Lockout Policy (max 5 attempts in 15 mins) ---
+                try {
+                    await connectToDatabase();
+                    // Checking failed audits in last 15 minutes
+                    const lockTimeLimit = new Date(Date.now() - 15 * 60 * 1000);
+                    const recentFailures = await LoginAudit.countDocuments({
+                        email: email.toLowerCase(),
+                        status: "FAILED",
+                        createdAt: { $gt: lockTimeLimit }
+                    });
+
+                    if (recentFailures >= 5) {
+                        console.log("❌ Account locked due to too many failed attempts:", email);
+                        // Optional: Record this specific blocked attempt as well
+                        await recordLoginAudit({
+                            email,
+                            status: "FAILED",
+                            reason: "Account Locked (Too many attempts)",
+                            ipAddress: resolveClientIp(req),
+                            userAgent: resolveUserAgent(req),
+                        });
+                        throw new Error("ACCOUNT_LOCKED");
+                    }
+                } catch (e: any) {
+                    // Propagate the specific account locked error
+                    if (e.message === "ACCOUNT_LOCKED") {
+                        throw new Error("Account locked due to too many failed attempts. Try again in 15 mins.");
+                    }
+                    console.error("Error checking login limits:", e);
+                }
+                // -------------------------------------------------------------------
 
                 // Fallback: Check against env credentials directly
                 const envEmail = process.env.ADMIN_EMAIL;
