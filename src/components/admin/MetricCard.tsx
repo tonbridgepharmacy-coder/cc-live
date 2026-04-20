@@ -9,7 +9,7 @@ interface MetricCardProps {
         value: number;
         isUp: boolean;
     };
-    color: "blue" | "emerald" | "amber" | "rose";
+    color: "blue" | "emerald" | "amber" | "rose" | "slate";
 }
 
 const colorStyles = {
@@ -17,6 +17,7 @@ const colorStyles = {
     emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
     amber: "bg-amber-50 text-amber-600 border-amber-100",
     rose: "bg-rose-50 text-rose-600 border-rose-100",
+    slate: "bg-slate-50 text-slate-600 border-slate-200",
 };
 
 export default function MetricCard({ label, value, icon: Icon, trend, color }: MetricCardProps) {

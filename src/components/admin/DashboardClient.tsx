@@ -14,7 +14,10 @@ import {
     Briefcase,
     FileText,
     Syringe,
-    Boxes
+    Boxes,
+    AlertTriangle,
+    ShieldAlert,
+    TimerReset
 } from "lucide-react";
 
 type DashboardMetrics = {
@@ -25,6 +28,10 @@ type DashboardMetrics = {
     pendingReview: number;
     totalVaccinesAvailable: number;
     totalServices: number;
+    lowStockAlerts: number;
+    expiringSoonAlerts: number;
+    pendingJobApps: number;
+    failedSecLogins: number;
 };
 
 type RecentAppointment = {
@@ -35,18 +42,52 @@ type RecentAppointment = {
     status: "Confirmed" | "Pending" | "Cancelled";
 };
 
+type RecentEnquiry = {
+    name: string;
+    subject: string;
+    date: string;
+};
+
 export default function DashboardClient({
     user,
     metrics,
     recentAppointments,
+    todaysAppointments,
+    recentEnquiries,
 }: {
     user?: { name?: string | null };
     metrics: DashboardMetrics;
     recentAppointments: RecentAppointment[];
+    todaysAppointments: RecentAppointment[];
+    recentEnquiries: RecentEnquiry[];
 }) {
     const formatMetricValue = (value: number) => value.toLocaleString("en-GB");
 
     const metricCards = [
+        {
+            label: "Low Stock Alerts",
+            value: formatMetricValue(metrics.lowStockAlerts),
+            icon: AlertTriangle,
+            color: metrics.lowStockAlerts > 0 ? "rose" as const : "emerald" as const,
+        },
+        {
+            label: "Expiring Batches",
+            value: formatMetricValue(metrics.expiringSoonAlerts),
+            icon: TimerReset,
+            color: metrics.expiringSoonAlerts > 0 ? "amber" as const : "slate" as const,
+        },
+        {
+            label: "Pending Job Apps",
+            value: formatMetricValue(metrics.pendingJobApps),
+            icon: Briefcase,
+            color: "blue" as const,
+        },
+        {
+            label: "Failed Logins (Today)",
+            value: formatMetricValue(metrics.failedSecLogins),
+            icon: ShieldAlert,
+            color: metrics.failedSecLogins > 0 ? "rose" as const : "slate" as const,
+        },
         {
             label: "No. of Appointments",
             value: formatMetricValue(metrics.totalAppointments),
@@ -66,36 +107,18 @@ export default function DashboardClient({
             color: "blue" as const,
         },
         {
-            label: "Active Services",
-            value: formatMetricValue(metrics.activeServices),
-            icon: CheckCircle2,
-            color: "emerald" as const,
-        },
-        {
             label: "Pending Review",
             value: formatMetricValue(metrics.pendingReview),
             icon: Users,
             color: "amber" as const,
-        },
-        {
-            label: "Total Vaccines Available",
-            value: formatMetricValue(metrics.totalVaccinesAvailable),
-            icon: Syringe,
-            color: "emerald" as const,
-        },
-        {
-            label: "Total Services",
-            value: formatMetricValue(metrics.totalServices),
-            icon: Boxes,
-            color: "rose" as const,
         },
     ];
 
     const managementActions = [
         { title: "Dashboard Overview", description: "View recent activity and upcoming bookings.", href: "/admin/dashboard", icon: LayoutDashboard, color: "blue" as const },
         { title: "Appointments", description: "Manage patient visits and bookings.", href: "/admin/appointments", icon: Calendar, color: "emerald" as const },
+        { title: "Inventory", description: "Manage vaccines and stock alerts.", href: "/admin/inventory", icon: Boxes, color: "rose" as const },
         { title: "Enquiries", description: "Respond to patient enquiries and messages.", href: "/admin/enquiries", icon: MessageSquare, color: "amber" as const },
-        { title: "Blogs", description: "Publish news, health articles and travel advice.", href: "/admin/blogs", icon: FileText, color: "slate" as const },
         { title: "Career", description: "Review job applications and manage career listings.", href: "/admin/careers", icon: Briefcase, color: "blue" as const },
     ];
 
@@ -104,7 +127,7 @@ export default function DashboardClient({
             header: "Patient", accessor: "patient", render: (row: RecentAppointment) => (
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
-                        {row.patient.charAt(0)}
+                        {row.patient.charAt(0).toUpperCase()}
                     </div>
                     <span className="font-medium text-slate-900">{row.patient}</span>
                 </div>
@@ -131,7 +154,7 @@ export default function DashboardClient({
     ];
 
     return (
-        <div className="space-y-10 animate-fade-in">
+        <div className="space-y-10 animate-fade-in pb-10">
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
@@ -141,34 +164,68 @@ export default function DashboardClient({
             </div>
 
             {/* Metrics Grid */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {metricCards.map((metric, idx) => (
                     <MetricCard key={idx} {...metric} />
                 ))}
             </div>
 
             <div className="grid gap-10 lg:grid-cols-3 items-start">
-                {/* Recent Appointments Table */}
-                <div className="lg:col-span-2 space-y-4">
+                
+                {/* Main Tables Content */}
+                <div className="lg:col-span-2 space-y-10">
+                    <DataTable
+                        title="Today's Schedule"
+                        description="Patients visiting the clinic today."
+                        columns={appointmentColumns}
+                        data={todaysAppointments}
+                        searchPlaceholder="Search today's patients..."
+                    />
+
                     <DataTable
                         title="Recent Appointments"
-                        description="Monitor and manage your upcoming patient visits."
+                        description="Monitor newly created bookings across the platform."
                         columns={appointmentColumns}
                         data={recentAppointments}
-                        searchPlaceholder="Search patients..."
+                        searchPlaceholder="Search all patients..."
                     />
                 </div>
 
                 {/* Quick Management Section */}
-                <div className="space-y-6">
+                <div className="space-y-10">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900">Quick Actions</h2>
-                        <p className="text-sm text-slate-500 mt-1">Direct access to your management modules.</p>
+                        <p className="text-sm text-slate-500 mt-1 mb-6">Direct access to your management modules.</p>
+                        <div className="grid gap-4">
+                            {managementActions.map((action, idx) => (
+                                <ManagementCard key={idx} {...action} />
+                            ))}
+                        </div>
                     </div>
-                    <div className="grid gap-4">
-                        {managementActions.map((action, idx) => (
-                            <ManagementCard key={idx} {...action} />
-                        ))}
+
+                    {/* Recent Enquiries Widget */}
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold text-slate-900">Recent Enquiries</h2>
+                            <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">New</span>
+                        </div>
+                        
+                        {recentEnquiries.length > 0 ? (
+                            <div className="space-y-4">
+                                {recentEnquiries.map((enq, idx) => (
+                                    <div key={idx} className="flex flex-col gap-1 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                                        <div className="flex justify-between items-start">
+                                            <span className="font-semibold text-slate-900 text-sm">{enq.name}</span>
+                                            <span className="text-xs text-slate-500">{enq.date}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-600 truncate">{enq.subject}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-sm text-slate-500 text-center py-4">No unread enquiries.</div>
+                        )}
+                        <a href="/admin/enquiries" className="block text-center text-sm text-blue-600 font-semibold mt-4 hover:underline">View All Enquiries</a>
                     </div>
                 </div>
             </div>

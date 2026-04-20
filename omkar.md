@@ -78,3 +78,34 @@ Refund Initiated (with reference) when Stripe call succeeds.
 Refund Processing (initiated within 24 hours) when manual follow-up is needed.
 API response now includes refundRequired and refundPending flags.
 Validation:
+
+
+
+
+
+
+Admin Dashboard dashboard-metric overview ke liye kaafi achhcche models aapke pas available hain. Database structure (src/models/) dekhne ke baad mai suggest karunga ki aap Dashboard par ye 5 important sections/metrics add kar sakte hain:
+
+1. 📦 Inventory / Medicines Alerts (Very Important)
+Pharmacy ke liye inventory sabse zaruri hai. Aap Batch.ts aur InventoryLog.ts ka use karke dashboard pe show kar sakte hain:
+
+Low Stock Alerts: Wo vaccines/medicines jinki quantity ek threshold (e.g., < 10) se neeche jaa chuki hai.
+Expiring Soon: Wo batches jo agle 30-60 din me expire hone wale hain.
+2. 📅 Today's Schedule (Appointments)
+Abhi Dashboard par Recent Appointments (last 5 created) show ho raha hai. Iske bajaye (ya iske sath) ek section "Today's Appointments" hona chahiye.
+
+Isme sirf aaj ki date filter karke list show karein (using slotDate == today), taaki clinic aane wale patient ki list ek nazar me dikh jaye.
+3. 📧 Recent Unread Enquiries
+Aapke paas Enquiry.ts model hai. Dashboard par quick action ke liye "Latest 5 Pending Enquiries" dikha sakte hain.
+
+Kaun contact kar raha hai aur kis reason se, admin waheen se dekh kar reply kar sake.
+4. 💼 HR & Careers Overview
+Aapke paas Job.ts aur JobApplication.ts models hain.
+
+Pending Job Applications: Kitne logo ne job apply kiya hai jo abhi review karna baaki hai.
+Active Job Postings: Currently clinic me kitni open roles chal rahi hain.
+5. 🛡️ Security / Admin Logs
+Aapne abhi Login secure kiya, aapke paas LoginAudit.ts hai.
+
+Ek chhota sa widget daal sakte hain "Recent Failed Logins" ya "System Alerts" ka.
+Agar koi admin account me brute-force karne ki try kare toh Dashboard wahi warning show kardega ki "User attempted X logins via IP address...".

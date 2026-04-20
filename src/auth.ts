@@ -54,12 +54,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
                 const { email, password } = parsedCredentials.data;
 
+                let recentFailures = 0;
+
                 // --- 1. Enforce Account Lockout Policy (max 5 attempts in 15 mins) ---
                 try {
                     await connectToDatabase();
                     // Checking failed audits in last 15 minutes
                     const lockTimeLimit = new Date(Date.now() - 15 * 60 * 1000);
-                    const recentFailures = await LoginAudit.countDocuments({
+                    recentFailures = await LoginAudit.countDocuments({
                         email: email.toLowerCase(),
                         status: "FAILED",
                         createdAt: { $gt: lockTimeLimit }
@@ -86,31 +88,52 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                 }
                 // -------------------------------------------------------------------
 
+                const handleFailedLogin = async (reason: string, userId?: string, role?: string) => {
+                    await recordLoginAudit({
+                        userId,
+                        email,
+                        role: role as any,
+                        status: "FAILED",
+                        reason,
+                        ipAddress: resolveClientIp(req),
+                        userAgent: resolveUserAgent(req),
+                    });
+                    
+                    const attemptsLeft = 5 - (recentFailures + 1);
+                    if (attemptsLeft <= 0) {
+                        throw new Error("Account locked due to too many failed attempts. Try again in 15 mins.");
+                    } else if (attemptsLeft === 1) {
+                        throw new Error("Invalid credentials. This is your last attempt! If wrong, your account will be locked for 15 mins.");
+                    } else {
+                        throw new Error(`Invalid credentials. You have ${attemptsLeft} attempts left.`);
+                    }
+                };
+
                 // Fallback: Check against env credentials directly
                 const envEmail = process.env.ADMIN_EMAIL;
                 const envPassword = process.env.ADMIN_PASSWORD;
 
-                if (
-                    envEmail &&
-                    envPassword &&
-                    email.toLowerCase() === envEmail.toLowerCase() &&
-                    password === envPassword
-                ) {
-                    console.log("✅ Admin login via ENV credentials:", email);
-                    await recordLoginAudit({
-                        email,
-                        role: "admin",
-                        status: "SUCCESS",
-                        reason: "ENV admin credentials",
-                        ipAddress: resolveClientIp(req),
-                        userAgent: resolveUserAgent(req),
-                    });
-                    return {
-                        id: "env-admin",
-                        name: "Admin",
-                        email: envEmail,
-                        role: "admin",
-                    };
+                if (envEmail && envPassword && email.toLowerCase() === envEmail.toLowerCase()) {
+                    if (password === envPassword) {
+                        console.log("✅ Admin login via ENV credentials:", email);
+                        await recordLoginAudit({
+                            email,
+                            role: "admin",
+                            status: "SUCCESS",
+                            reason: "ENV admin credentials",
+                            ipAddress: resolveClientIp(req),
+                            userAgent: resolveUserAgent(req),
+                        });
+                        return {
+                            id: "env-admin",
+                            name: "Admin",
+                            email: envEmail,
+                            role: "admin",
+                        };
+                    } else {
+                        console.log("❌ Invalid ENV password for:", email);
+                        return await handleFailedLogin("Invalid ENV password");
+                    }
                 }
 
                 // DB-based auth
@@ -120,30 +143,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
                     if (!user) {
                         console.log("❌ User not found:", email);
-                        await recordLoginAudit({
-                            email,
-                            status: "FAILED",
-                            reason: "User not found",
-                            ipAddress: resolveClientIp(req),
-                            userAgent: resolveUserAgent(req),
-                        });
-                        return null;
+                        return await handleFailedLogin("User not found");
                     }
 
                     const isPasswordValid = await user.comparePassword(password);
 
                     if (!isPasswordValid) {
-                        console.log("❌ Invalid password for:", email);
-                        await recordLoginAudit({
-                            userId: user._id.toString(),
-                            email,
-                            role: user.role,
-                            status: "FAILED",
-                            reason: "Invalid password",
-                            ipAddress: resolveClientIp(req),
-                            userAgent: resolveUserAgent(req),
-                        });
-                        return null;
+                        console.log("❌ Invalid password for DB user:", email);
+                        return await handleFailedLogin("Invalid password", user._id.toString(), user.role);
                     }
 
                     console.log("✅ Credentials matched for:", email, "Role:", user.role);

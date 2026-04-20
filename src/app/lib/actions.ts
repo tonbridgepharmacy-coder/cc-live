@@ -15,13 +15,16 @@ export async function authenticate(
     } catch (error) {
         if (error instanceof AuthError) {
             // Check if our custom error was thrown inside authorize
-            if (error.cause?.err?.message?.includes("Account locked")) {
-                return error.cause.err.message;
+            if (error.cause?.err?.message) {
+                const msg = error.cause.err.message;
+                if (msg.includes("Account locked") || msg.includes("last attempt") || msg.includes("attempts left")) {
+                    return msg;
+                }
             }
-            // For custom thrown errors NextAuth might capture the original error message in `.type` or `.message` depending on beta versions,
-            // so let's also check error.message
-            if (error.message.includes("Account locked")) {
-                 return "Account locked due to too many failed attempts. Try again in 15 mins.";
+            
+            // For custom thrown errors NextAuth might capture the original error message directly
+            if (error.message.includes("Account locked") || error.message.includes("last attempt") || error.message.includes("attempts left")) {
+                 return error.message.replace("CredentialsSignin: ", "");
             }
 
             switch (error.type) {
