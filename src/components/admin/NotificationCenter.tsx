@@ -48,9 +48,16 @@ export default function NotificationCenter() {
                     isOpen ? "bg-primary text-white" : "text-slate-500 hover:text-primary hover:bg-primary/5"
                 }`}
             >
-                <Bell size={20} />
+                <div className={hasUnread && !isOpen ? "animate-bounce text-red-500" : ""}>
+                    <Bell size={20} />
+                </div>
                 {notifications.length > 0 && (
-                    <span className={`absolute top-2 right-2 block h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white transition-transform ${hasUnread ? "animate-pulse scale-110" : "scale-100"}`}></span>
+                    <>
+                        {hasUnread && !isOpen && (
+                            <span className="absolute top-2 right-2 block h-2.5 w-2.5 rounded-full bg-red-500 animate-ping"></span>
+                        )}
+                        <span className={`absolute top-2 right-2 block h-2.5 w-2.5 rounded-full bg-red-500 border-2 ${isOpen ? 'border-primary' : 'border-white'}`}></span>
+                    </>
                 )}
             </button>
 

@@ -65,8 +65,8 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const daysParam = searchParams.get("days");
-        const requestedDays = daysParam ? parseInt(daysParam, 10) : 14;
-        const days = Number.isFinite(requestedDays) ? Math.min(Math.max(requestedDays, 1), 60) : 14;
+        const requestedDays = daysParam ? parseInt(daysParam, 10) : 365;
+        const days = Number.isFinite(requestedDays) ? Math.min(Math.max(requestedDays, 1), 365) : 365;
 
         await connectToDatabase();
 
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         // Booking UI starts from tomorrow
         start.setDate(start.getDate() + 1);
 
-        const maxDays = Math.min(days, config.daysInAdvance || days);
+        const maxDays = days;
         const end = new Date(start);
         end.setDate(end.getDate() + (maxDays - 1));
         end.setHours(23, 59, 59, 999);

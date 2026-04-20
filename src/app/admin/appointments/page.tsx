@@ -124,10 +124,7 @@ export default async function AppointmentsPage() {
 
     return (
         <div className="w-full">
-            <div className="mb-8">
-                <h1 className="text-3xl font-black text-slate-800 tracking-tight">Appointments</h1>
-                <p className="text-slate-500 font-medium">Manage your pharmacy appointments and bookings.</p>
-            </div>
+
 
             <AppointmentsClient 
                 initialAppointments={serializedAppointments}

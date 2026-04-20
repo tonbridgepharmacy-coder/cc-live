@@ -9,7 +9,7 @@ export const siteConfig = {
         "Clarke & Coleman Pharmacy provides expert pharmaceutical care, clinical consultations, and a wide range of health services across the UK.",
     url: "https://clarkeandcoleman.co.uk",
     phone: "01732353743",
-    email: "info@clarkeandcoleman.co.uk",
+    email: "tonbridgepharmacy@gmail.com",
     address: "Clarke & Coleman Pharmacy, 140 High St, Tonbridge TN9 1BB",
     openingHours: "Mon–Fri: 8:30am – 6:30pm | Sat: 9am – 1pm",
     careers: {

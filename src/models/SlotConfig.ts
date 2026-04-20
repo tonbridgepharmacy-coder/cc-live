@@ -23,7 +23,7 @@ const SlotConfigSchema = new Schema<ISlotConfig>(
         lunchEndHour: { type: Number, default: 14 },
         cutoffHours: { type: Number, default: 2 },
         lockMinutes: { type: Number, default: 10 },
-        daysInAdvance: { type: Number, default: 30 },
+        daysInAdvance: { type: Number, default: 365 },
         closedDays: { type: [Number], default: [0] }, // Closed on Sundays
     },
     { timestamps: true }

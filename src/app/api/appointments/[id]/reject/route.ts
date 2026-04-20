@@ -188,7 +188,7 @@ export async function POST(
                         <div style="background: white; border-radius: 8px; padding: 16px; border: 1px solid #e5e7eb;">
                             <p style="margin: 0; font-size: 14px; color: #374151;">
                                 📞 <strong>+44 20 7946 0958</strong><br/>
-                                ✉️ <strong>info@clarkeandcoleman.co.uk</strong>
+                                ✉️ <strong>tonbridgepharmacy@gmail.com</strong>
                             </p>
                         </div>
                     </div>

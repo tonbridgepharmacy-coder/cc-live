@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Briefcase, Users, CheckCircle, Trash2, Download, FileText } from "lucide-react";
+import { format } from "date-fns";
 import { deleteJob } from "@/lib/actions/job";
 import { updateApplicationStatus, deleteApplication } from "@/lib/actions/jobApplication";
 import { useRouter } from "next/navigation";
@@ -152,7 +153,7 @@ export default function CareerDashboardClient({ jobs, applications }: { jobs: an
                                                 {job.type}
                                             </span>
                                         </td>
-                                        <td className="p-6 text-sm text-slate-500">{new Date(job.postedDate).toLocaleDateString()}</td>
+                                        <td className="p-6 text-sm text-slate-500">{format(new Date(job.postedDate), "MMM d, yyyy")}</td>
                                         <td className="p-6">
                                             <span className={`px-3 py-1.5 rounded-md text-xs font-bold border ${job.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
                                                 {job.status}
@@ -200,7 +201,7 @@ export default function CareerDashboardClient({ jobs, applications }: { jobs: an
                                             <div className="text-slate-700">{app.email}</div>
                                             <div className="text-slate-500 text-xs">{app.phone}</div>
                                         </td>
-                                        <td className="p-6 text-sm text-slate-500">{new Date(app.appliedDate).toLocaleDateString()}</td>
+                                        <td className="p-6 text-sm text-slate-500">{format(new Date(app.appliedDate), "MMM d, yyyy")}</td>
                                         <td className="p-6">
                                             <select
                                                 value={app.status}

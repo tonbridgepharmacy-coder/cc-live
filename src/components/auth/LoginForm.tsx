@@ -65,7 +65,7 @@ export default function LoginForm() {
                     name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@clarkecoleman.com"
+                    placeholder="tonbridgepharmacy@gmail.com"
                     required
                     className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />

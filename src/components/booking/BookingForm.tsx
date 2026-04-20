@@ -8,7 +8,7 @@ import {
     useStripe,
     useElements,
 } from "@stripe/react-stripe-js";
-import { format, addDays, startOfToday } from "date-fns";
+import { format, addDays, startOfToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isBefore } from "date-fns";
 import { useSearchParams } from "next/navigation";
 
 const isMongoObjectId = (value: string) => /^[a-f\d]{24}$/i.test(value);
@@ -121,6 +121,7 @@ function BookingFormInner({
     const [datesLoading, setDatesLoading] = useState(false);
     const [datesError, setDatesError] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState<Date>(addDays(startOfToday(), 1));
+    const [currentMonth, setCurrentMonth] = useState<Date>(startOfMonth(addDays(startOfToday(), 1)));
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [appointmentId, setAppointmentId] = useState<string | null>(null);
@@ -173,7 +174,7 @@ function BookingFormInner({
             setDatesLoading(true);
             setDatesError(null);
             try {
-                const res = await fetch("/api/available-dates?days=14");
+                const res = await fetch("/api/available-dates?days=365");
                 const data = await res.json();
                 if (!res.ok) {
                     throw new Error(data?.error || "Failed to load available dates");
@@ -466,24 +467,71 @@ function BookingFormInner({
                                         <p className="text-xs text-amber-600 mt-1 font-bold">Please try again later.</p>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-7 gap-2">
-                                        {availableDates.map((date) => {
-                                            const isSelected = date.toDateString() === selectedDate.toDateString();
-                                            return (
-                                                <button
-                                                    key={format(date, "yyyy-MM-dd")}
-                                                    onClick={() => setSelectedDate(date)}
-                                                    className={`flex flex-col items-center py-3 rounded-xl transition-all ${
-                                                        isSelected
-                                                            ? "bg-primary text-white font-bold shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2"
-                                                            : "bg-white border border-slate-200 hover:border-primary/50 text-slate-600 font-bold"
-                                                    }`}
-                                                >
-                                                    <span className="text-[9px] uppercase font-black opacity-70 mb-1">{format(date, "EEE")}</span>
-                                                    <span className="text-base">{format(date, "d")}</span>
-                                                </button>
-                                            );
-                                        })}
+                                    <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                                        {/* Calendar Navigator */}
+                                        <div className="flex items-center justify-between p-4 bg-slate-50 border-b border-slate-100">
+                                            <button 
+                                                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                                                disabled={isSameMonth(currentMonth, startOfMonth(addDays(startOfToday(), 1)))}
+                                                className="p-2 hover:bg-white rounded-xl transition-all disabled:opacity-30 disabled:pointer-events-none"
+                                            >
+                                                <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                                            </button>
+                                            <span className="text-sm font-black text-slate-800 uppercase tracking-widest">{format(currentMonth, "MMMM yyyy")}</span>
+                                            <button 
+                                                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                                                className="p-2 hover:bg-white rounded-xl transition-all"
+                                            >
+                                                <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                                            </button>
+                                        </div>
+
+                                        {/* Calendar Grid */}
+                                        <div className="p-4">
+                                            <div className="grid grid-cols-7 mb-2">
+                                                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                                                    <div key={day} className="text-[10px] font-black text-slate-400 text-center uppercase tracking-wider py-1">{day}</div>
+                                                ))}
+                                            </div>
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {(() => {
+                                                    const start = startOfWeek(startOfMonth(currentMonth));
+                                                    const end = endOfWeek(endOfMonth(currentMonth));
+                                                    const days = eachDayOfInterval({ start, end });
+                                                    
+                                                    return days.map((day) => {
+                                                        const isCurrentMonth = isSameMonth(day, currentMonth);
+                                                        const isAvailable = availableDates.some(ad => isSameDay(ad, day));
+                                                        const isPast = isBefore(day, startOfToday());
+                                                        const isSelected = isSameDay(day, selectedDate);
+                                                        const isBookable = isAvailable && !isPast;
+
+                                                        return (
+                                                            <button
+                                                                key={day.toISOString()}
+                                                                disabled={!isBookable}
+                                                                onClick={() => setSelectedDate(day)}
+                                                                className={`
+                                                                    aspect-square flex items-center justify-center text-sm rounded-xl transition-all relative
+                                                                    ${!isCurrentMonth ? "opacity-0 pointer-events-none" : ""}
+                                                                    ${isSelected 
+                                                                        ? "bg-primary text-white font-black shadow-lg shadow-primary/30 scale-105 z-10" 
+                                                                        : isBookable 
+                                                                            ? "hover:bg-primary/10 hover:text-primary text-slate-700 font-bold bg-white border border-slate-100" 
+                                                                            : "text-slate-200 cursor-not-allowed"
+                                                                    }
+                                                                `}
+                                                            >
+                                                                {format(day, "d")}
+                                                                {isBookable && !isSelected && (
+                                                                    <div className="absolute bottom-1 w-1 h-1 bg-primary/40 rounded-full" />
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    });
+                                                })()}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                                 <p className="mt-4 text-[10px] text-slate-400 italic font-bold tracking-wide">* Showing only available dates.</p>
