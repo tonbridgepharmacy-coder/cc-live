@@ -157,7 +157,7 @@ function BookingFormInner({
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
-    const canBookOnline = selectedService?.type === "vaccine";
+    const canBookOnline = !!selectedService;
 
     // Fetch available slots when date changes
     useEffect(() => {
@@ -433,15 +433,11 @@ function BookingFormInner({
                                 )}
                             </select>
 
-                            {allServices.length === 0 ? (
+                            {allServices.length === 0 && (
                                 <p className="mt-4 text-sm font-black text-red-600">
                                     No bookable service is available right now. Please contact the clinic.
                                 </p>
-                            ) : selectedService && !canBookOnline ? (
-                                <p className="mt-4 text-sm font-black text-amber-700">
-                                    Online booking is available for vaccines only.
-                                </p>
-                            ) : null}
+                            )}
                         </section>
 
                         <div className="grid lg:grid-cols-2 gap-12">

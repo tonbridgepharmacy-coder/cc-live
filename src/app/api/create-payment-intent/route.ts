@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import connectToDatabase from "@/lib/db";
 import Appointment from "@/models/Appointment";
 import Vaccine from "@/models/Vaccine";
+import Service from "@/models/Service";
 import { reserveStock, releaseStock, getAvailableStock } from "@/lib/actions/inventory";
 import SlotConfig from "@/models/SlotConfig";
 import mongoose from "mongoose";
@@ -37,12 +38,17 @@ export async function POST(request: Request) {
 
         await connectToDatabase();
 
-        // 1. Verify vaccine exists and get price
-        const vaccine = await Vaccine.findById(vaccineId).catch(() => null);
+        // 1. Verify vaccine or service exists and get price
+        let item = await Vaccine.findById(vaccineId).catch(() => null);
+        if (!item) {
+            item = await Service.findById(vaccineId).catch(() => null);
+        }
+        
+        const price = (item as any)?.price ?? 0;
 
-        if (!vaccine) {
+        if (!item) {
             return NextResponse.json(
-                { error: "Vaccine not found" },
+                { error: "Service or Vaccine not found" },
                 { status: 404 }
             );
         }
@@ -154,7 +160,7 @@ export async function POST(request: Request) {
             notes: notes || undefined,
             status: "PENDING",
             paymentStatus: "UNPAID",
-            amountPaid: vaccine.price,
+            amountPaid: price,
             lockedUntil,
         });
 
@@ -191,10 +197,10 @@ export async function POST(request: Request) {
             stripeKey === "sk_test_mock_key_for_build" ||
             stripeKey.length < 20;
 
-        if (isMockMode) {
-            console.log("Mock Payment Mode Active — Appointment ID:", appointment._id);
+        if (isMockMode || price <= 0) {
+            console.log(`${price <= 0 ? "Free Booking" : "Mock Payment"} Mode Active — Appointment ID:`, appointment._id);
             return NextResponse.json({
-                clientSecret: "mock_secret_" + Date.now(),
+                clientSecret: "free_or_mock_secret_" + Date.now(),
                 appointmentId: appointment._id.toString(),
                 isMock: true,
             });
@@ -202,7 +208,7 @@ export async function POST(request: Request) {
 
         // 7. Create Stripe PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(vaccine.price * 100), // pence
+            amount: Math.round(price * 100), // pence
             currency: "gbp",
             automatic_payment_methods: { enabled: true },
             metadata: {
