@@ -10,6 +10,7 @@ import Vaccine from "@/models/Vaccine";
 import { handleConfirmedAppointmentAutomation } from "@/lib/appointmentAutomation";
 import { sendEmail } from "@/lib/email";
 import { format } from "date-fns";
+import { generateGoogleCalendarTemplateLink } from "@/lib/googleCalendar";
 
 function getErrorMessage(error: unknown) {
     return error instanceof Error ? error.message : "Unknown error";
@@ -99,12 +100,15 @@ export async function updateAppointmentStatus(id: string, status: string) {
 
             try {
                 const dateLabel = format(new Date(appointment.slotDate), "EEEE, d MMMM yyyy");
+                const gcalLink = generateGoogleCalendarTemplateLink({
+                    serviceTitle: vaccine?.title || "Vaccination",
+                    slotDate: new Date(appointment.slotDate),
+                    slotTime: appointment.slotTime,
+                });
                 const meetSection = appointment.meetingLink
                     ? `<p style="margin: 0 0 10px;"><strong>Google Meet:</strong> <a href="${appointment.meetingLink}" style="color: #1d4ed8;">Join consultation</a></p>`
                     : "";
-                const calendarSection = appointment.calendarEventLink
-                    ? `<p style="margin: 0;"><strong>Calendar:</strong> <a href="${appointment.calendarEventLink}" style="color: #1d4ed8;">Open event</a></p>`
-                    : "";
+                const calendarSection = `<p style="margin: 0;"><strong>Calendar:</strong> <a href="${gcalLink}" style="color: #1d4ed8;">Add to Google Calendar</a></p>`;
 
                 const emailHtml = `
                     <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto;">
@@ -239,7 +243,8 @@ export async function createManualAppointment(data: {
             return { success: false, error: "Invalid slotTime (expected HH:mm)" };
         }
 
-        const slotDateObj = new Date(`${slotDate}T00:00:00`);
+        const [y, m, d] = slotDate.split("-").map(Number);
+        const slotDateObj = new Date(Date.UTC(y, m - 1, d));
         if (Number.isNaN(slotDateObj.getTime())) {
             return { success: false, error: "Invalid slotDate (expected YYYY-MM-DD)" };
         }
@@ -254,9 +259,9 @@ export async function createManualAppointment(data: {
         }
 
         const startOfDay = new Date(slotDateObj);
-        startOfDay.setHours(0, 0, 0, 0);
+        startOfDay.setUTCHours(0, 0, 0, 0);
         const endOfDay = new Date(slotDateObj);
-        endOfDay.setHours(23, 59, 59, 999);
+        endOfDay.setUTCHours(23, 59, 59, 999);
 
         const alreadyBlocked = await Appointment.countDocuments({
             slotDate: { $gte: startOfDay, $lte: endOfDay },

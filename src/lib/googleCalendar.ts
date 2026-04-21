@@ -21,6 +21,48 @@ export type CalendarCreateResult = {
     error?: string;
 };
 
+export function generateGoogleCalendarTemplateLink({
+    serviceTitle,
+    slotDate,
+    slotTime,
+    durationMinutes = 30,
+    location = "Clarke & Coleman Pharmacy, London",
+    details = "Thank you for booking with Clarke & Coleman Pharmacy.",
+}: {
+    serviceTitle: string;
+    slotDate: Date;
+    slotTime: string;
+    durationMinutes?: number;
+    location?: string;
+    details?: string;
+}) {
+    try {
+        const startTime = new Date(slotDate);
+        const [hours, minutes] = slotTime.split(":").map(Number);
+        startTime.setHours(hours, minutes);
+
+        const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
+
+        const formatGCalDate = (date: Date) => {
+            const pad = (n: number) => n.toString().padStart(2, "0");
+            return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+        };
+
+        const startStr = formatGCalDate(startTime);
+        const endStr = formatGCalDate(endTime);
+
+        const eventTitle = encodeURIComponent(`${serviceTitle} Appointment - Clarke & Coleman`);
+        const eventDetails = encodeURIComponent(details);
+        const eventLocation = encodeURIComponent(location);
+        const timezone = "Europe/London";
+
+        return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${startStr}/${endStr}&details=${eventDetails}&location=${eventLocation}&ctz=${timezone}`;
+    } catch (e) {
+        console.error("Error generating calendar link", e);
+        return "";
+    }
+}
+
 function getGoogleJwtClient() {
     const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const privateKeyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;

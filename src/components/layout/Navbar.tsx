@@ -51,7 +51,7 @@ const navLinks = [
     { label: "Services", href: "/services" },
     { label: "Vaccines", href: "/vaccines" },
     { label: "Blogs", href: "/blogs" },
-    { label: "Careers", href: "/careers" },
+    // { label: "Careers", href: "/careers" },
 ];
 
 
@@ -105,12 +105,12 @@ export default function Navbar() {
                                 <span className="hidden md:inline">{siteConfig.openingHours}</span>
                                 <span className="md:hidden">Mon–Sat</span>
                             </span>
-                            <Link
+                            {/* <Link
                                 href="/careers"
                                 className="hover:text-white/80 transition-colors font-medium"
                             >
                                 Careers
-                            </Link>
+                            </Link> */}
                         </div>
                     </div>
                 </div>

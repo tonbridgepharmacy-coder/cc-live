@@ -28,9 +28,10 @@ function toDateString(date: Date) {
 }
 
 function generateSlotTimesForDate(dateStr: string, config: SlotConfigLike) {
-    const requestedDate = new Date(`${dateStr}T00:00:00`);
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const requestedDate = new Date(Date.UTC(y, m - 1, d));
     const now = new Date();
-    const isToday = requestedDate.toDateString() === now.toDateString();
+    const isToday = requestedDate.toISOString().split("T")[0] === now.toISOString().split("T")[0];
 
     const startMinutes = config.startHour * 60;
     const endMinutes = config.endHour * 60;
@@ -48,7 +49,7 @@ function generateSlotTimesForDate(dateStr: string, config: SlotConfigLike) {
 
         if (isToday) {
             const slotTime = new Date(requestedDate);
-            slotTime.setHours(hour, min, 0, 0);
+            slotTime.setUTCHours(hour, min, 0, 0);
             const cutoffTime = new Date(
                 now.getTime() + config.cutoffHours * 60 * 60 * 1000
             );
@@ -78,14 +79,14 @@ export async function GET(request: NextRequest) {
 
         const now = new Date();
         const start = new Date();
-        start.setHours(0, 0, 0, 0);
+        start.setUTCHours(0, 0, 0, 0);
         // Booking UI starts from tomorrow
         start.setDate(start.getDate() + 1);
 
         const maxDays = days;
         const end = new Date(start);
         end.setDate(end.getDate() + (maxDays - 1));
-        end.setHours(23, 59, 59, 999);
+        end.setUTCHours(23, 59, 59, 999);
 
         const appointments = await Appointment.find({
             slotDate: { $gte: start, $lte: end },

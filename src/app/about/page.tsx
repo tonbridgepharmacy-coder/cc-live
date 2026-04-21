@@ -125,7 +125,7 @@ export default function AboutPage() {
                                 <p>
                                     My name is{" "}
                                     <span className="font-bold text-text-primary">{story.founderName}</span>
-                                    {story.paragraphs[0].replace("{name}", "").trimStart()}
+                                    {story.paragraphs[0].replace("My name is {name}", "").trimStart()}
                                 </p>
                                 <p>{story.paragraphs[1]}</p>
                                 <p>{story.paragraphs[2]}</p>

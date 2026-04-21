@@ -33,21 +33,22 @@ export default function GalleryClient({ initialImages }: { initialImages: Galler
         if (!files || files.length === 0) return;
 
         setIsUploading(true);
-        const uploadedUrls: string[] = [];
 
         try {
-            // Sequential upload to avoid hitting rate limits or overwhelming the client
-            for (let i = 0; i < files.length; i++) {
+            // Parallel upload for better performance
+            const uploadPromises = Array.from(files).map(async (file) => {
                 const formData = new FormData();
-                formData.append("file", files[i]);
-                const uploadRes = await uploadImage(formData);
-                if (uploadRes.success && uploadRes.url) {
-                    uploadedUrls.push(uploadRes.url);
-                }
-            }
+                formData.append("file", file);
+                return await uploadImage(formData);
+            });
 
-            if (uploadedUrls.length > 0) {
-                const dbRes = await uploadGalleryImagesBatch(uploadedUrls.map(url => ({ imageUrl: url })));
+            const uploadResults = await Promise.all(uploadPromises);
+            const successfulUploads = uploadResults
+                .filter(res => res.success && res.url)
+                .map(res => ({ imageUrl: res.url!, publicId: (res as any).publicId }));
+
+            if (successfulUploads.length > 0) {
+                const dbRes = await uploadGalleryImagesBatch(successfulUploads);
                 if (dbRes.success) {
                     setImages((prev) => [...prev, ...dbRes.images].sort((a, b) => a.order - b.order));
                     router.refresh();

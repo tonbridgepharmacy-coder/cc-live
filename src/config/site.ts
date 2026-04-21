@@ -11,7 +11,7 @@ export const siteConfig = {
     phone: "01732353743",
     email: "tonbridgepharmacy@gmail.com",
     address: "Clarke & Coleman Pharmacy, 140 High St, Tonbridge TN9 1BB",
-    openingHours: "Mon–Fri: 8:30am – 6:30pm | Sat: 9am – 1pm",
+    openingHours: "Mon–Fri: 9:00am – 6:30pm | Sat: 9am – 1pm",
     careers: {
         email: "careers@clarkeandcoleman.co.uk",
     },
@@ -33,5 +33,5 @@ export const navLinks = [
     },
     { label: "Vaccines", href: "/vaccines" },
     { label: "Blogs", href: "/blogs" },
-    { label: "Careers", href: "/careers" },
+    // { label: "Careers", href: "/careers" },
 ] as const;

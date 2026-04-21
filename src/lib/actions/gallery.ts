@@ -3,8 +3,9 @@
 import connectToDatabase from "@/lib/db";
 import { Gallery } from "@/models/Gallery";
 import { revalidatePath } from "next/cache";
+import { v2 as cloudinary } from "cloudinary";
 
-export async function uploadGalleryImage(data: { imageUrl: string; caption?: string }) {
+export async function uploadGalleryImage(data: { imageUrl: string; publicId?: string; caption?: string }) {
     try {
         await connectToDatabase();
 
@@ -14,6 +15,7 @@ export async function uploadGalleryImage(data: { imageUrl: string; caption?: str
 
         const newImage = await Gallery.create({
             imageUrl: data.imageUrl,
+            publicId: data.publicId,
             caption: data.caption,
             order: newOrder,
         });
@@ -94,12 +96,16 @@ export async function toggleGalleryImageStatus(id: string, currentStatus: boolea
 export async function deleteGalleryImage(id: string) {
     try {
         await connectToDatabase();
+        const image = await Gallery.findById(id);
+        if (image?.publicId) {
+            await cloudinary.uploader.destroy(image.publicId);
+        }
         await Gallery.findByIdAndDelete(id);
 
         revalidatePath("/admin/gallery");
         revalidatePath("/");
 
-        return { success: true, message: "Image removed from gallery" };
+        return { success: true, message: "Image removed from gallery and Cloudinary" };
     } catch (error: any) {
         return { success: false, message: error.message || "Failed to delete image" };
     }
@@ -108,18 +114,25 @@ export async function deleteGalleryImage(id: string) {
 export async function deleteGalleryImages(ids: string[]) {
     try {
         await connectToDatabase();
+        const images = await Gallery.find({ _id: { $in: ids } });
+        const publicIds = images.map(img => img.publicId).filter(Boolean);
+
+        if (publicIds.length > 0) {
+            await Promise.all(publicIds.map(pid => cloudinary.uploader.destroy(pid)));
+        }
+
         await Gallery.deleteMany({ _id: { $in: ids } });
 
         revalidatePath("/admin/gallery");
         revalidatePath("/");
 
-        return { success: true, message: `${ids.length} images removed from gallery` };
+        return { success: true, message: `${ids.length} images removed from gallery and Cloudinary` };
     } catch (error: any) {
         return { success: false, message: error.message || "Failed to delete images" };
     }
 }
 
-export async function uploadGalleryImagesBatch(images: { imageUrl: string; caption?: string }[]) {
+export async function uploadGalleryImagesBatch(images: { imageUrl: string; publicId?: string; caption?: string }[]) {
     try {
         await connectToDatabase();
 

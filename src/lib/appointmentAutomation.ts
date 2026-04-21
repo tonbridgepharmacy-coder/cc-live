@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import type { IAppointment } from "@/models/Appointment";
-import { createAppointmentCalendarEvent } from "@/lib/googleCalendar";
+import { createAppointmentCalendarEvent, generateGoogleCalendarTemplateLink } from "@/lib/googleCalendar";
 import { sendEmail } from "@/lib/email";
 
 type NotifyInput = {
@@ -40,6 +40,12 @@ export async function handleConfirmedAppointmentAutomation({
 
     if (adminEmail && !appointment.adminNotifiedAt) {
         const dateLabel = format(new Date(appointment.slotDate), "EEEE, d MMMM yyyy");
+        const adminCalendarLink = generateGoogleCalendarTemplateLink({
+            serviceTitle: serviceTitle,
+            slotDate: new Date(appointment.slotDate),
+            slotTime: appointment.slotTime,
+            details: `Appointment with ${appointment.customerName}\nEmail: ${appointment.customerEmail}\nPhone: ${appointment.customerPhone || "N/A"}\nID: ${appointment._id}`,
+        });
 
         const html = `
             <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
@@ -54,9 +60,12 @@ export async function handleConfirmedAppointmentAutomation({
                     <p><strong>Time:</strong> ${appointment.slotTime}</p>
                     <p><strong>Appointment ID:</strong> ${appointment._id}</p>
                     <p><strong>Payment:</strong> ${appointment.paymentStatus}</p>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                         <a href="${adminCalendarLink}" style="display: inline-block; background: #1d4ed8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">Add to Admin Calendar</a>
+                         ${appointment.calendarEventLink ? `<p style="margin-top: 10px; font-size: 12px; color: #64748b;">✅ Automatically synced to clinic calendar</p>` : ""}
+                    </div>
                     ${appointment.meetingLink ? `<p><strong>Google Meet Link:</strong> <a href="${appointment.meetingLink}">${appointment.meetingLink}</a></p>` : ""}
-                    ${appointment.calendarEventLink ? `<p><strong>Calendar Event:</strong> <a href="${appointment.calendarEventLink}">Open in Google Calendar</a></p>` : ""}
-                    ${calendarError ? `<p><strong>Calendar Status:</strong> ${calendarError}</p>` : ""}
+                    ${calendarError ? `<p style="color: #dc2626; font-size: 12px;"><strong>Sync Note:</strong> ${calendarError}. Use the button above to add manually.</p>` : ""}
                 </div>
                 <p style="color: #64748b; font-size: 13px;">This appointment is already saved in the admin appointments module.</p>
             </div>
