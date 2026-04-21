@@ -136,7 +136,7 @@ export default async function HomePage() {
               {/* Trust Markers */}
               <div className="flex items-center gap-6 mt-10 pt-8 border-t border-border/60">
                 {[
-                  { num: "25+", label: "Years Experience" },
+                  { num: "100+", label: "Years Experience" },
                   { num: "15k+", label: "Patients Served" },
                   { num: "4.9", label: "Google Rating" },
                 ].map((stat) => (
@@ -189,7 +189,7 @@ export default async function HomePage() {
               </div>
               {/* Experience Badge */}
               <div className="absolute -bottom-4 -right-4 bg-accent text-white rounded-2xl p-5 shadow-xl shadow-accent/20">
-                <div className="text-3xl font-bold leading-none">25+</div>
+                <div className="text-3xl font-bold leading-none">100+</div>
                 <div className="text-xs mt-1 opacity-90">Years of<br />Excellence</div>
               </div>
             </div>
