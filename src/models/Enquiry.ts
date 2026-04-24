@@ -4,6 +4,7 @@ export interface IEnquiry extends Document {
     name: string;
     email: string;
     phone: string;
+    subject?: string;
     message: string;
     status: "pending" | "contacted" | "hold" | "hot" | "warm" | "cold";
     createdAt: Date;
@@ -15,6 +16,7 @@ const EnquirySchema = new Schema<IEnquiry>(
         name: { type: String, required: true },
         email: { type: String, required: true },
         phone: { type: String, required: true },
+        subject: { type: String },
         message: { type: String, required: true },
         status: {
             type: String,

@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
             config = await SlotConfig.create({});
         }
 
-        const requestedDate = new Date(`${dateStr}T00:00:00`);
-        const dayOfWeek = requestedDate.getDay(); // 0=Sun, 6=Sat
+        const [y, m, d] = dateStr.split("-").map(Number);
+        const requestedDate = new Date(Date.UTC(y, m - 1, d));
+        const dayOfWeek = requestedDate.getUTCDay(); // 0=Sun, 6=Sat
 
         // Check if it's a closed day
         if (config.closedDays.includes(dayOfWeek)) {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
 
         // Check cutoff (cannot book within X hours)
         const now = new Date();
-        const isToday = requestedDate.toDateString() === now.toDateString();
+        const isToday = requestedDate.toISOString().split("T")[0] === now.toISOString().split("T")[0];
 
         // Generate all time slots for the day
         const slots: { time: string; available: number; total: number }[] = [];
@@ -71,9 +72,9 @@ export async function GET(request: NextRequest) {
 
         // Get existing bookings for the date (active ones = not cancelled)
         const startOfDay = new Date(requestedDate);
-        startOfDay.setHours(0, 0, 0, 0);
+        startOfDay.setUTCHours(0, 0, 0, 0);
         const endOfDay = new Date(requestedDate);
-        endOfDay.setHours(23, 59, 59, 999);
+        endOfDay.setUTCHours(23, 59, 59, 999);
 
         const existingBookings = await Appointment.find({
             slotDate: { $gte: startOfDay, $lte: endOfDay },

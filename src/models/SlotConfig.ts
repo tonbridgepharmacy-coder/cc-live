@@ -16,7 +16,7 @@ export interface ISlotConfig extends Document {
 const SlotConfigSchema = new Schema<ISlotConfig>(
     {
         intervalMinutes: { type: Number, default: 30 },
-        capacityPerSlot: { type: Number, default: 3 },
+        capacityPerSlot: { type: Number, default: 1 },
         startHour: { type: Number, default: 9 },
         endHour: { type: Number, default: 17 },
         lunchStartHour: { type: Number, default: 13 },

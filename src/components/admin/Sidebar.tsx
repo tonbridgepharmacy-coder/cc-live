@@ -34,12 +34,12 @@ const navLinks = [
     { name: "Vaccine Categories", href: "/admin/vaccines/categories", icon: FileText },
     { name: "Vaccines", href: "/admin/vaccines", icon: Syringe },
     { name: "Vaccines Settings", href: "/admin/vaccines/settings", icon: FileText },
+    { name: "Blogs", href: "/admin/blogs", icon: FileText },
+    { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
+    { name: "Career", href: "/admin/careers", icon: Briefcase },
     { name: "Inventory", href: "/admin/inventory", icon: Package },
     { name: "Inventory Logs", href: "/admin/inventory/logs", icon: ClipboardList },
     { name: "Login Audits", href: "/admin/login-audits", icon: ShieldCheck },
-    { name: "Blogs", href: "/admin/blogs", icon: FileText },
-    { name: "Career", href: "/admin/careers", icon: Briefcase },
-    { name: "Gallery", href: "/admin/gallery", icon: ImageIcon },
 ];
 
 

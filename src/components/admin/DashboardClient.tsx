@@ -119,6 +119,7 @@ export default function DashboardClient({
         { title: "Appointments", description: "Manage patient visits and bookings.", href: "/admin/appointments", icon: Calendar, color: "emerald" as const },
         { title: "Inventory", description: "Manage vaccines and stock alerts.", href: "/admin/inventory", icon: Boxes, color: "rose" as const },
         { title: "Enquiries", description: "Respond to patient enquiries and messages.", href: "/admin/enquiries", icon: MessageSquare, color: "amber" as const },
+        { title: "Gallery", description: "Manage Cloudinary images and homepage gallery.", href: "/admin/gallery", icon: FileText, color: "blue" as const },
         { title: "Career", description: "Review job applications and manage career listings.", href: "/admin/careers", icon: Briefcase, color: "blue" as const },
     ];
 

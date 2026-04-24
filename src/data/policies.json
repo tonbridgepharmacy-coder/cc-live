@@ -81,31 +81,60 @@
       }
     ]
   },
-  "returnPolicy": {
-    "title": "Return and Refund Policy",
-    "summary": "Returns and refunds depend on product type, safety requirements, and whether services were delivered.",
+  "refundPolicy": {
+    "title": "Refund & Returns Policy",
+    "summary": "At Clarke & Coleman Pharmacy, we aim to ensure that all products supplied are of the highest quality and that our customers are satisfied with their purchase. This policy explains when refunds, exchanges, or replacements are available.",
     "sections": [
       {
-        "heading": "Healthcare and Safety Products",
+        "heading": "1. Prescription Medicines",
         "points": [
-          "For hygiene and safety reasons, opened or used healthcare products are generally non-returnable unless faulty.",
-          "Sealed and unused eligible items may be returned within 14 days with proof of purchase.",
-          "Faulty or damaged products are eligible for replacement or refund under consumer law."
+          "Prescription-only medicines cannot be returned, exchanged, or refunded once supplied, unless they are faulty or have been supplied incorrectly.",
+          "This is due to legal, safety, and storage requirements.",
+          "If you believe a prescription item is faulty or incorrect, please contact us immediately so we can investigate and resolve the issue."
         ]
       },
       {
-        "heading": "Appointment and Service Refunds",
+        "heading": "2. Over-the-Counter Medicines",
         "points": [
-          "If an appointment is canceled by the pharmacy, a full refund or reschedule option is offered.",
-          "If canceled by the client, refund eligibility may depend on cancellation notice and service type.",
-          "No-show or late cancellation may be non-refundable where clearly communicated in advance."
+          "Non-prescription medicines (e.g. pain relief, cough remedies, vitamins) cannot be returned if they have been opened or used, unless faulty."
         ]
       },
       {
-        "heading": "Refund Method and Timelines",
+        "heading": "3. Non-Medicinal Retail Products",
         "points": [
-          "Approved refunds are returned to the original payment method.",
-          "Processing may take 5 to 10 business days depending on the payment provider."
+          "Examples include toiletries, cosmetics, health accessories, and gift items.",
+          "If you change your mind, we may offer a refund or exchange on unused, unopened items returned within 14 days of purchase, with proof of purchase.",
+          "Items must be in a resaleable condition."
+        ]
+      },
+      {
+        "heading": "4. Faulty Items",
+        "points": [
+          "If an item (including medicines or retail products) is faulty, damaged, or not as described, you are entitled to a refund, replacement, or repair in line with the Consumer Rights Act 2015.",
+          "Please return the item as soon as possible with proof of purchase."
+        ]
+      },
+      {
+        "heading": "5. Proof of Purchase",
+        "points": [
+          "A receipt or other valid proof of purchase is normally required for all refunds or exchanges."
+        ]
+      },
+      {
+        "heading": "6. Method of Refund",
+        "points": [
+          "Refunds will usually be made using the original payment method.",
+          "Cash refunds may not be available unless the original payment was made in cash."
+        ]
+      },
+      {
+        "heading": "7. Exclusions",
+        "points": [
+          "The following items are non-refundable unless faulty:",
+          "Prescription medicines",
+          "Opened or used medicines",
+          "Perishable goods",
+          "Items marked as non-returnable at the point of sale"
         ]
       }
     ]

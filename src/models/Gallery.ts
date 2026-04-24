@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IGallery extends Document {
     imageUrl: string;
+    publicId?: string;
     caption?: string;
     order: number;
     isActive: boolean;
@@ -12,6 +13,9 @@ const GallerySchema: Schema = new Schema({
     imageUrl: {
         type: String,
         required: [true, "Image URL is required"],
+    },
+    publicId: {
+        type: String,
     },
     caption: {
         type: String,

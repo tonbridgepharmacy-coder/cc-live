@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  const returnPolicy = policies.returnPolicy as PolicyBlock;
+  const returnPolicy = policies.refundPolicy as PolicyBlock;
 
   return (
     <main className="bg-background min-h-screen py-12 sm:py-16">

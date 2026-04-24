@@ -26,7 +26,8 @@ export async function uploadImage(formData: FormData) {
 
         return {
             success: true,
-            url: (result as any).secure_url
+            url: (result as any).secure_url,
+            publicId: (result as any).public_id
         };
     } catch (error: any) {
         console.error("Upload error:", error);

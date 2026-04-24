@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/email";
 import { format } from "date-fns";
 import { handleConfirmedAppointmentAutomation } from "@/lib/appointmentAutomation";
 import Vaccine from "@/models/Vaccine";
+import { generateGoogleCalendarTemplateLink } from "@/lib/googleCalendar";
 
 type BookingRequestBody = {
     appointmentId?: string;
@@ -105,6 +106,13 @@ export async function POST(request: Request) {
                         <p><strong>Date:</strong> ${format(new Date(appointment.slotDate), "EEEE, d MMMM yyyy")}</p>
                         <p><strong>Time:</strong> ${appointment.slotTime}</p>
                         <p><strong>Reference:</strong> ${appointment._id}</p>
+                        <div style="margin: 20px 0;">
+                            <a href="${generateGoogleCalendarTemplateLink({
+                                serviceTitle: vaccine?.title || "Vaccination",
+                                slotDate: new Date(appointment.slotDate),
+                                slotTime: appointment.slotTime,
+                            })}" style="background: #1d4ed8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Add to Google Calendar</a>
+                        </div>
                         <br/>
                         <p>Clarke & Coleman Pharmacy Team</p>
                     `;
@@ -116,6 +124,33 @@ export async function POST(request: Request) {
                     });
                 } catch (emailError) {
                     console.error("Email send failed:", emailError);
+                }
+
+                // Send notification email to admin
+                try {
+                    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER;
+                    if (adminEmail) {
+                        await sendEmail({
+                            to: adminEmail,
+                            subject: `New Booking Confirmed - ${appointment.customerName}`,
+                            html: `
+                                <div style="font-family: sans-serif; color: #333;">
+                                    <h2 style="color: #1d4ed8;">New Appointment Confirmed</h2>
+                                    <p>An appointment has been confirmed and paid.</p>
+                                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                        <p><strong>Customer:</strong> ${appointment.customerName}</p>
+                                        <p><strong>Email:</strong> ${appointment.customerEmail}</p>
+                                        <p><strong>Service:</strong> ${vaccine?.title || "Vaccination"}</p>
+                                        <p><strong>Date:</strong> ${format(new Date(appointment.slotDate), "EEEE, d MMMM yyyy")}</p>
+                                        <p><strong>Time:</strong> ${appointment.slotTime}</p>
+                                    </div>
+                                    <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/appointments" style="background: #1d4ed8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">View in Admin Dashboard</a></p>
+                                </div>
+                            `,
+                        });
+                    }
+                } catch (adminEmailError) {
+                    console.error("Admin notification email failed:", adminEmailError);
                 }
 
                 return NextResponse.json({ success: true, message: "Booking confirmed" });
@@ -153,6 +188,13 @@ export async function POST(request: Request) {
                 <p><strong>Date:</strong> ${format(new Date(date || bookingDate), "EEEE, d MMMM yyyy")}</p>
                 <p><strong>Time:</strong> ${time}</p>
                 <p><strong>Location:</strong> Clarke & Coleman Pharmacy, London</p>
+                <div style="margin: 20px 0;">
+                    <a href="${generateGoogleCalendarTemplateLink({
+                        serviceTitle: service?.title || "Appointment",
+                        slotDate: new Date(date || bookingDate),
+                        slotTime: time || "00:00",
+                    })}" style="background: #1d4ed8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Add to Google Calendar</a>
+                </div>
                 <br/>
                 <p>Clarke & Coleman Pharmacy Team</p>
             `;
@@ -164,6 +206,33 @@ export async function POST(request: Request) {
             });
         } catch (emailError) {
             console.error("Email send failed:", emailError);
+        }
+
+        // Send notification email to admin
+        try {
+            const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER;
+            if (adminEmail) {
+                await sendEmail({
+                    to: adminEmail,
+                    subject: `New Booking Created - ${customer?.name || "Customer"}`,
+                    html: `
+                        <div style="font-family: sans-serif; color: #333;">
+                            <h2 style="color: #1d4ed8;">New Appointment Created</h2>
+                            <p>A new appointment has been created.</p>
+                            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <p><strong>Customer:</strong> ${customer?.name || "Unknown"}</p>
+                                <p><strong>Email:</strong> ${customer?.email || "Unknown"}</p>
+                                <p><strong>Service:</strong> ${service?.title || "Unknown"}</p>
+                                <p><strong>Date:</strong> ${format(new Date(date || bookingDate), "EEEE, d MMMM yyyy")}</p>
+                                <p><strong>Time:</strong> ${time || "N/A"}</p>
+                            </div>
+                            <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/appointments" style="background: #1d4ed8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">View in Admin Dashboard</a></p>
+                        </div>
+                    `,
+                });
+            }
+        } catch (adminEmailError) {
+            console.error("Admin notification email failed:", adminEmailError);
         }
 
         return NextResponse.json({ success: true, message: "Booking created" });

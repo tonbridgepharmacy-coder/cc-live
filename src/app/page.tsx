@@ -133,19 +133,6 @@ export default async function HomePage() {
 
               </div>
 
-              {/* Trust Markers */}
-              <div className="flex items-center gap-6 mt-10 pt-8 border-t border-border/60">
-                {[
-                  { num: "100+", label: "Years Experience" },
-                  { num: "15k+", label: "Patients Served" },
-                  { num: "4.9", label: "Google Rating" },
-                ].map((stat) => (
-                  <div key={stat.label}>
-                    <div className="text-xl font-bold text-primary">{stat.num}</div>
-                    <div className="text-xs text-text-muted">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Right — Clinical Image */}

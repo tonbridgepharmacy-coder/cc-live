@@ -123,8 +123,9 @@ export default function Footer() {
                                 { label: "About Us", href: "/about" },
                                 { label: "Blog", href: "/blogs" },
                                 { label: "Book Appointment", href: "/book" },
-                                { label: "Careers", href: "/careers" },
+                                // { label: "Careers", href: "/careers" },
                                 { label: "Privacy Policy", href: "/privacy" },
+                                { label: "Refund Policy", href: "/refund" },
                             ].map((link) => (
                                 <li key={link.href}>
                                     <Link
@@ -207,6 +208,12 @@ export default function Footer() {
                                 className="text-xs text-white/40 hover:text-white/70 transition-colors"
                             >
                                 Terms & Conditions
+                            </Link>
+                            <Link
+                                href="/refund"
+                                className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                            >
+                                Refund Policy
                             </Link>
                             <span className="text-xs text-white/30">
                                 GPhC Registered

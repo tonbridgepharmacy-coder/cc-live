@@ -50,6 +50,7 @@ interface AppointmentsClientProps {
     initialAppointments: AppointmentItem[];
     legacyBookings: LegacyBooking[];
     vaccines: Array<{ _id: string; title: string }>;
+    services: Array<{ _id: string; title: string }>;
     onStatusUpdate: (formData: FormData) => Promise<void>;
     onLegacyStatusUpdate: (formData: FormData) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
@@ -63,6 +64,7 @@ export default function AppointmentsClient({
     initialAppointments, 
     legacyBookings,
     vaccines,
+    services,
     onStatusUpdate,
     onLegacyStatusUpdate,
     onDelete,
@@ -85,7 +87,7 @@ export default function AppointmentsClient({
     const [bulkMailOpen, setBulkMailOpen] = useState(false);
 
     const [reserveForm, setReserveForm] = useState({
-        vaccineId: vaccines?.[0]?._id || "",
+        vaccineId: vaccines?.[0]?._id || services?.[0]?._id || "",
         slotDate: "",
         slotTime: "",
         customerName: "Admin Reserved",
@@ -796,7 +798,7 @@ export default function AppointmentsClient({
                         <form onSubmit={handleReserveSubmit} className="p-6">
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 <div className="space-y-2">
-                                    <label htmlFor="reserve-vaccine" className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Vaccine</label>
+                                    <label htmlFor="reserve-vaccine" className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Vaccine or Service</label>
                                     <select
                                         id="reserve-vaccine"
                                         value={reserveForm.vaccineId}
@@ -804,10 +806,21 @@ export default function AppointmentsClient({
                                         className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/10 transition-all outline-none"
                                         required
                                     >
-                                        <option value="" disabled>Select vaccine</option>
-                                        {(vaccines || []).map((v) => (
-                                            <option key={v._id} value={v._id}>{v.title}</option>
-                                        ))}
+                                        <option value="" disabled>Select category</option>
+                                        {(vaccines && vaccines.length > 0) && (
+                                            <optgroup label="Vaccines">
+                                                {vaccines.map((v) => (
+                                                    <option key={v._id} value={v._id}>{v.title}</option>
+                                                ))}
+                                            </optgroup>
+                                        )}
+                                        {(services && services.length > 0) && (
+                                            <optgroup label="Pharmacy Services">
+                                                {services.map((s) => (
+                                                    <option key={s._id} value={s._id}>{s.title}</option>
+                                                ))}
+                                            </optgroup>
+                                        )}
                                     </select>
                                 </div>
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { type Metadata } from "next";
 import { format, parseISO, addMinutes } from "date-fns";
+import BookingSuccessRedirect from "@/components/booking/BookingSuccessRedirect";
+import { generateGoogleCalendarTemplateLink } from "@/lib/googleCalendar";
 
 export const metadata: Metadata = {
     title: "Booking Confirmed",
@@ -30,24 +32,11 @@ export default async function BookingSuccessPage({
     let calendarLink = "";
 
     if (date && time && service) {
-        try {
-            const startTime = parseISO(date); // Date object (time is 00:00 usually but local)
-            const [hours, minutes] = time.split(":").map(Number);
-            startTime.setHours(hours, minutes);
-
-            const endTime = addMinutes(startTime, 30); // Assume 30 mins duration
-
-            const startStr = format(startTime, "yyyyMMdd'T'HHmmss");
-            const endStr = format(endTime, "yyyyMMdd'T'HHmmss");
-
-            const eventTitle = encodeURIComponent(`${service} Appointment - Clarke & Coleman`);
-            const eventDetails = encodeURIComponent("Thank you for booking with Clarke & Coleman Pharmacy.");
-            const eventLocation = encodeURIComponent("Clarke & Coleman Pharmacy, London");
-
-            calendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${startStr}/${endStr}&details=${eventDetails}&location=${eventLocation}`;
-        } catch (e) {
-            console.error("Error generating calendar link", e);
-        }
+        calendarLink = generateGoogleCalendarTemplateLink({
+            serviceTitle: service,
+            slotDate: parseISO(date),
+            slotTime: time,
+        });
     }
 
     return (
@@ -64,6 +53,8 @@ export default async function BookingSuccessPage({
                         Thank you for booking with Clarke & Coleman Pharmacy. We&apos;ve sent a
                         confirmation email with all the details.
                     </p>
+
+                    {calendarLink && <BookingSuccessRedirect calendarLink={calendarLink} />}
 
                     <div className="bg-secondary/5 rounded-xl p-6 mb-8 text-left">
                         <h3 className="font-semibold text-text-primary mb-3">Your Appointment</h3>

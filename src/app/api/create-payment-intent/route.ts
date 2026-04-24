@@ -54,8 +54,9 @@ export async function POST(request: Request) {
         }
 
         // 2. Check slot availability
-        const slotDate = new Date(`${date}T00:00:00`);
-        slotDate.setHours(0, 0, 0, 0);
+        const [y, m, d] = date.split("-").map(Number);
+        const slotDate = new Date(Date.UTC(y, m - 1, d));
+        slotDate.setUTCHours(0, 0, 0, 0);
 
         let config = await SlotConfig.findOne();
         if (!config) {
@@ -90,9 +91,9 @@ export async function POST(request: Request) {
 
         // Count existing confirmed + actively locked bookings for this slot
         const startOfDay = new Date(slotDate);
-        startOfDay.setHours(0, 0, 0, 0);
+        startOfDay.setUTCHours(0, 0, 0, 0);
         const endOfDay = new Date(slotDate);
-        endOfDay.setHours(23, 59, 59, 999);
+        endOfDay.setUTCHours(23, 59, 59, 999);
 
         const existingCount = await Appointment.countDocuments({
             slotDate: { $gte: startOfDay, $lte: endOfDay },
