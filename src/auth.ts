@@ -109,68 +109,75 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     }
                 };
 
-                // Fallback: Check against env credentials directly
                 const envEmail = process.env.ADMIN_EMAIL;
                 const envPassword = process.env.ADMIN_PASSWORD;
 
-                if (envEmail && envPassword && email.toLowerCase() === envEmail.toLowerCase()) {
-                    if (password === envPassword) {
-                        console.log("✅ Admin login via ENV credentials:", email);
-                        await recordLoginAudit({
-                            email,
-                            role: "admin",
-                            status: "SUCCESS",
-                            reason: "ENV admin credentials",
-                            ipAddress: resolveClientIp(req),
-                            userAgent: resolveUserAgent(req),
-                        });
-                        return {
-                            id: "env-admin",
-                            name: "Admin",
-                            email: envEmail,
-                            role: "admin",
-                        };
-                    } else {
+                // If env admin credentials are configured, enforce them strictly.
+                // This guarantees that password changes in environment variables
+                // immediately become the only valid admin login path.
+                if (envEmail && envPassword) {
+                    if (email.toLowerCase() !== envEmail.toLowerCase()) {
+                        console.log("❌ Non-env admin email attempted:", email);
+                        return await handleFailedLogin("Use configured admin email");
+                    }
+
+                    if (password !== envPassword) {
                         console.log("❌ Invalid ENV password for:", email);
                         return await handleFailedLogin("Invalid ENV password");
                     }
+
+                    console.log("✅ Admin login via ENV credentials:", email);
+                    await recordLoginAudit({
+                        email,
+                        role: "admin",
+                        status: "SUCCESS",
+                        reason: "ENV admin credentials",
+                        ipAddress: resolveClientIp(req),
+                        userAgent: resolveUserAgent(req),
+                    });
+                    return {
+                        id: "env-admin",
+                        name: "Admin",
+                        email: envEmail,
+                        role: "admin",
+                    };
                 }
 
-                // DB-based auth
+                // DB-based auth (primary)
                 try {
                     await connectToDatabase();
                     const user = await User.findOne({ email: email.toLowerCase() });
 
-                    if (!user) {
-                        console.log("❌ User not found:", email);
-                        return await handleFailedLogin("User not found");
+                    if (user) {
+                        const isPasswordValid = await user.comparePassword(password);
+
+                        if (!isPasswordValid) {
+                            console.log("❌ Invalid password for DB user:", email);
+                            return await handleFailedLogin("Invalid password", user._id.toString(), user.role);
+                        }
+
+                        console.log("✅ Credentials matched for:", email, "Role:", user.role);
+
+                        await recordLoginAudit({
+                            userId: user._id.toString(),
+                            email,
+                            role: user.role,
+                            status: "SUCCESS",
+                            reason: "Credentials authenticated",
+                            ipAddress: resolveClientIp(req),
+                            userAgent: resolveUserAgent(req),
+                        });
+
+                        return {
+                            id: user._id.toString(),
+                            name: user.name,
+                            email: user.email,
+                            role: user.role,
+                        };
                     }
 
-                    const isPasswordValid = await user.comparePassword(password);
-
-                    if (!isPasswordValid) {
-                        console.log("❌ Invalid password for DB user:", email);
-                        return await handleFailedLogin("Invalid password", user._id.toString(), user.role);
-                    }
-
-                    console.log("✅ Credentials matched for:", email, "Role:", user.role);
-
-                    await recordLoginAudit({
-                        userId: user._id.toString(),
-                        email,
-                        role: user.role,
-                        status: "SUCCESS",
-                        reason: "Credentials authenticated",
-                        ipAddress: resolveClientIp(req),
-                        userAgent: resolveUserAgent(req),
-                    });
-
-                    return {
-                        id: user._id.toString(),
-                        name: user.name,
-                        email: user.email,
-                        role: user.role,
-                    };
+                    console.log("❌ User not found:", email);
+                    return await handleFailedLogin("User not found");
                 } catch (error) {
                     console.error("❌ Auth error:", error);
                     await recordLoginAudit({

@@ -41,7 +41,14 @@ export default async function ServiceDetailsPage({ params }: { params: { slug: s
     const resolvedParams = await params;
     const res = await getServiceBySlug(resolvedParams.slug);
 
-    if (!res.success || !res.service) {
+    if (!res.success) {
+        if (res.error === "Service not found") {
+            notFound();
+        }
+        throw new Error(res.error || "Failed to load service");
+    }
+
+    if (!res.service || res.service.status !== "published") {
         notFound();
     }
 

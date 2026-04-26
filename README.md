@@ -68,3 +68,23 @@ Notes:
 
 - If Google Calendar credentials are missing, booking confirmation still works; calendar creation is skipped safely.
 - Appointment entries continue to appear in the admin appointments module as usual.
+
+## Vercel Deployment Checklist (Local Works, Live Fails)
+
+If features work on localhost but fail on Vercel, check these first:
+
+1. Copy `.env.example` values into Vercel Project Settings -> Environment Variables.
+2. Set variables for all environments you use (`Production`, `Preview`, and `Development` if needed).
+3. Redeploy after updating environment variables.
+4. Confirm `MONGODB_URI` points to the production database and your MongoDB network rules allow Vercel access.
+5. Confirm `NEXT_PUBLIC_SITE_URL` and `AUTH_URL` match your live domain exactly.
+6. Ensure Stripe live keys are configured (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`).
+7. Ensure Cloudinary variables are configured, otherwise uploads/gallery actions will fail in production.
+8. Ensure Google Calendar and SMTP variables are set if booking automation and emails are expected.
+
+Common symptom mapping:
+
+- Empty public/admin data: `MONGODB_URI` missing or pointing to wrong DB.
+- Login/auth issues: missing `AUTH_SECRET`/`JWT_SECRET`/`AUTH_URL`.
+- Upload button works locally but not live: missing Cloudinary credentials.
+- Payments not completing live: Stripe live keys/webhook secret missing or incorrect.

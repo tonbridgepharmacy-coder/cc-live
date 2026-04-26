@@ -2,6 +2,7 @@
 
 import mongoose from "mongoose";
 import Vaccine, { IVaccine } from "@/models/Vaccine";
+import "@/models/VaccineCategory";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
@@ -30,6 +31,10 @@ function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
     if (typeof error === "string") return error;
     return "Unknown error";
+}
+
+function escapeRegex(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function connectToDatabase() {
@@ -131,18 +136,21 @@ export async function getPublishedVaccines() {
 
 export async function getVaccineBySlug(slug: string) {
     try {
-        const cachedFetch = unstable_cache(
-            async () => {
-                await connectToDatabase();
-                const vaccine = await Vaccine.findOne({ slug }).populate('category');
-                return vaccine ? JSON.parse(JSON.stringify(vaccine)) : null;
-            },
-            [`vaccine-${slug}`],
-            { tags: ['vaccines'] }
-        );
-        const vaccine = await cachedFetch();
+        const db = await connectToDatabase();
+        if (!db) {
+            return { success: false, error: "Database connection is not available" };
+        }
+
+        const decodedSlug = decodeURIComponent(slug || "").trim();
+        if (!decodedSlug) {
+            return { success: false, error: "Vaccine not found" };
+        }
+
+        const slugPattern = new RegExp(`^${escapeRegex(decodedSlug)}$`, "i");
+        const vaccine = await Vaccine.findOne({ slug: slugPattern }).populate('category').lean();
+
         if (!vaccine) return { success: false, error: "Vaccine not found" };
-        return { success: true, vaccine };
+        return { success: true, vaccine: JSON.parse(JSON.stringify(vaccine)) };
     } catch (error: unknown) {
         return { success: false, error: getErrorMessage(error) };
     }

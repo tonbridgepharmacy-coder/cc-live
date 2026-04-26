@@ -40,7 +40,14 @@ export default async function VaccineDetailsPage({ params }: { params: { slug: s
     const resolvedParams = await params;
     const res = await getVaccineBySlug(resolvedParams.slug);
 
-    if (!res.success || !res.vaccine) {
+    if (!res.success) {
+        if (res.error === "Vaccine not found") {
+            notFound();
+        }
+        throw new Error(res.error || "Failed to load vaccine");
+    }
+
+    if (!res.vaccine || res.vaccine.status !== "published") {
         notFound();
     }
 
