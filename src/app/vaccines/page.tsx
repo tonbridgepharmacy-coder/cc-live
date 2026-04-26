@@ -4,7 +4,6 @@ import { getPublishedVaccines } from "@/lib/actions/vaccine";
 import { getPageSetting } from "@/lib/actions/pageSettings";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
-export const dynamic = 'force-dynamic';
 
 export default async function VaccinesPage() {
     const vaccinesRes = await getPublishedVaccines();

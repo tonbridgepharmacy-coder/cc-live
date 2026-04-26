@@ -2,7 +2,7 @@
 
 import mongoose from "mongoose";
 import Service, { IService } from "@/models/Service";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 const MONGO_URI = process.env.MONGODB_URI;
@@ -39,6 +39,8 @@ export async function createService(data: Partial<IService>) {
         const newService = await Service.create(payload);
         revalidatePath('/admin/services');
         revalidatePath('/services');
+        // @ts-ignore
+        revalidateTag('services');
         return { success: true, service: JSON.parse(JSON.stringify(newService)) };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -59,6 +61,8 @@ export async function updateService(id: string, data: Partial<IService>) {
         revalidatePath('/admin/services');
         revalidatePath('/services');
         revalidatePath(`/services/${updatedService.slug}`);
+        // @ts-ignore
+        revalidateTag('services');
         return { success: true, service: JSON.parse(JSON.stringify(updatedService)) };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -71,6 +75,8 @@ export async function deleteService(id: string) {
         await Service.findByIdAndDelete(id);
         revalidatePath('/admin/services');
         revalidatePath('/services');
+        // @ts-ignore
+        revalidateTag('services');
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -87,11 +93,20 @@ export async function getServices() {
     }
 }
 
-export async function getPublishedServices() {
-    try {
+const _getPublishedServices = unstable_cache(
+    async () => {
         await connectToDatabase();
         const services = await Service.find({ status: 'published' }).populate('category').select('-content').sort({ createdAt: -1 });
-        return { success: true, services: JSON.parse(JSON.stringify(services)) };
+        return JSON.parse(JSON.stringify(services));
+    },
+    ['published-services'],
+    { tags: ['services'] }
+);
+
+export async function getPublishedServices() {
+    try {
+        const services = await _getPublishedServices();
+        return { success: true, services };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -99,10 +114,18 @@ export async function getPublishedServices() {
 
 export async function getServiceBySlug(slug: string) {
     try {
-        await connectToDatabase();
-        const service = await Service.findOne({ slug }).populate('category');
+        const cachedFetch = unstable_cache(
+            async () => {
+                await connectToDatabase();
+                const service = await Service.findOne({ slug }).populate('category');
+                return service ? JSON.parse(JSON.stringify(service)) : null;
+            },
+            [`service-${slug}`],
+            { tags: ['services'] }
+        );
+        const service = await cachedFetch();
         if (!service) return { success: false, error: "Service not found" };
-        return { success: true, service: JSON.parse(JSON.stringify(service)) };
+        return { success: true, service };
     } catch (error: any) {
         return { success: false, error: error.message };
     }

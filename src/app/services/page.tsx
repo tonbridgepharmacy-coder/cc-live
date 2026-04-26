@@ -5,7 +5,6 @@ import { getPublishedServices } from "@/lib/actions/service";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
-export const dynamic = 'force-dynamic';
 
 export default async function ServicesPage() {
     const [catRes, serRes] = await Promise.all([
