@@ -2,7 +2,7 @@
 
 import mongoose from "mongoose";
 import Category, { ICategory } from "@/models/Category";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
 const MONGO_URI = process.env.MONGODB_URI;
 
@@ -33,6 +33,8 @@ export async function createCategory(data: Partial<ICategory>) {
         const newCategory = await Category.create(data);
         revalidatePath('/admin/categories');
         revalidatePath('/services');
+        // @ts-ignore - Next 16 typings mismatch
+        revalidateTag('services');
         return { success: true, category: JSON.parse(JSON.stringify(newCategory)) };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -46,6 +48,8 @@ export async function updateCategory(id: string, data: Partial<ICategory>) {
         if (!updatedCategory) throw new Error("Category not found");
         revalidatePath('/admin/categories');
         revalidatePath('/services');
+        // @ts-ignore
+        revalidateTag('services');
         return { success: true, category: JSON.parse(JSON.stringify(updatedCategory)) };
     } catch (error: any) {
         return { success: false, error: error.message };
@@ -58,17 +62,28 @@ export async function deleteCategory(id: string) {
         await Category.findByIdAndDelete(id);
         revalidatePath('/admin/categories');
         revalidatePath('/services');
+        // @ts-ignore
+        revalidateTag('services');
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
 }
 
-export async function getCategories() {
-    try {
+const _getCategories = unstable_cache(
+    async () => {
         await connectToDatabase();
         const categories = await Category.find({}).sort({ name: 1 });
-        return { success: true, categories: JSON.parse(JSON.stringify(categories)) };
+        return JSON.parse(JSON.stringify(categories));
+    },
+    ['categories'],
+    { tags: ['services'] }
+);
+
+export async function getCategories() {
+    try {
+        const categories = await _getCategories();
+        return { success: true, categories };
     } catch (error: any) {
         return { success: false, error: error.message };
     }

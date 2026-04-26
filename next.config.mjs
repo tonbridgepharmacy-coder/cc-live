@@ -13,6 +13,8 @@ const nextConfig = {
     },
   },
   images: {
+    minimumCacheTTL: 60,
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -21,6 +23,7 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
+        pathname: '/**',
       },
       {
         protocol: 'https',

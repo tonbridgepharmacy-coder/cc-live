@@ -2,6 +2,7 @@
 
 import { Search, Filter, ChevronRight, ChevronLeft, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface Column {
     header: string;
@@ -20,6 +21,8 @@ interface DataTableProps {
 }
 
 export default function DataTable({ columns, data, title, description, searchPlaceholder = "Search...", editHrefPrefix, deleteAction }: DataTableProps) {
+    const router = useRouter();
+
     return (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-premium overflow-hidden">
             {/* Table Header */}
@@ -86,9 +89,14 @@ export default function DataTable({ columns, data, title, description, searchPla
                                             )}
                                             {deleteAction && (
                                                 <button
-                                                    onClick={() => {
+                                                    onClick={async () => {
                                                         if (confirm("Are you sure you want to delete this item?")) {
-                                                            deleteAction(row._id);
+                                                            const res = await deleteAction(row._id);
+                                                            if (res && res.success) {
+                                                                router.refresh();
+                                                            } else if (res && res.error) {
+                                                                alert("Error: " + res.error);
+                                                            }
                                                         }
                                                     }}
                                                     className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"

@@ -54,7 +54,11 @@ export default function VaccinesClient({ initialData }: { initialData: VaccineLi
     const handleDelete = async (id: string, title: string) => {
         if (confirm(`Are you sure you want to delete the vaccine "${title}"?`)) {
             const res = await deleteVaccine(id);
-            if (!res.success) alert("Error deleting vaccine: " + res.error);
+            if (!res.success) {
+                alert("Error deleting vaccine: " + res.error);
+            } else {
+                router.refresh();
+            }
         }
     };
 

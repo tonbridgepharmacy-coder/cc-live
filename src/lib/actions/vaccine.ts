@@ -2,7 +2,7 @@
 
 import mongoose from "mongoose";
 import Vaccine, { IVaccine } from "@/models/Vaccine";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 type VaccineInput = Omit<Partial<IVaccine>, "category"> & { category: string };
@@ -55,6 +55,8 @@ export async function createVaccine(data: VaccineInput) {
         const newVaccine = await Vaccine.create(payload);
         revalidatePath('/admin/vaccines');
         revalidatePath('/vaccines');
+        // @ts-ignore
+        revalidateTag('vaccines');
         return { success: true, vaccine: JSON.parse(JSON.stringify(newVaccine)) };
     } catch (error: unknown) {
         return { success: false, error: getErrorMessage(error) };
@@ -76,6 +78,8 @@ export async function updateVaccine(id: string, data: VaccineInput) {
         revalidatePath('/admin/vaccines');
         revalidatePath('/vaccines');
         revalidatePath(`/vaccines/${updatedVaccine.slug}`);
+        // @ts-ignore
+        revalidateTag('vaccines');
         return { success: true, vaccine: JSON.parse(JSON.stringify(updatedVaccine)) };
     } catch (error: unknown) {
         return { success: false, error: getErrorMessage(error) };
@@ -88,6 +92,8 @@ export async function deleteVaccine(id: string) {
         await Vaccine.findByIdAndDelete(id);
         revalidatePath('/admin/vaccines');
         revalidatePath('/vaccines');
+        // @ts-ignore
+        revalidateTag('vaccines');
         return { success: true };
     } catch (error: unknown) {
         return { success: false, error: getErrorMessage(error) };
@@ -104,11 +110,20 @@ export async function getVaccines() {
     }
 }
 
-export async function getPublishedVaccines() {
-    try {
+const _getPublishedVaccines = unstable_cache(
+    async () => {
         await connectToDatabase();
         const vaccines = await Vaccine.find({ status: 'published' }).populate('category').select('-content').sort({ createdAt: -1 });
-        return { success: true, vaccines: JSON.parse(JSON.stringify(vaccines)) };
+        return JSON.parse(JSON.stringify(vaccines));
+    },
+    ['published-vaccines'],
+    { tags: ['vaccines'] }
+);
+
+export async function getPublishedVaccines() {
+    try {
+        const vaccines = await _getPublishedVaccines();
+        return { success: true, vaccines };
     } catch (error: unknown) {
         return { success: false, error: getErrorMessage(error) };
     }
@@ -116,10 +131,18 @@ export async function getPublishedVaccines() {
 
 export async function getVaccineBySlug(slug: string) {
     try {
-        await connectToDatabase();
-        const vaccine = await Vaccine.findOne({ slug }).populate('category');
+        const cachedFetch = unstable_cache(
+            async () => {
+                await connectToDatabase();
+                const vaccine = await Vaccine.findOne({ slug }).populate('category');
+                return vaccine ? JSON.parse(JSON.stringify(vaccine)) : null;
+            },
+            [`vaccine-${slug}`],
+            { tags: ['vaccines'] }
+        );
+        const vaccine = await cachedFetch();
         if (!vaccine) return { success: false, error: "Vaccine not found" };
-        return { success: true, vaccine: JSON.parse(JSON.stringify(vaccine)) };
+        return { success: true, vaccine };
     } catch (error: unknown) {
         return { success: false, error: getErrorMessage(error) };
     }
