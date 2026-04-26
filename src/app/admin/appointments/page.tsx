@@ -4,100 +4,17 @@ import "@/models/Vaccine";
 import Vaccine from "@/models/Vaccine";
 import Service from "@/models/Service";
 import AppointmentsClient from "./AppointmentsClient";
-
-import { 
-    updateAppointmentStatus, 
-    updateBookingStatus, 
-    deleteAppointment, 
-    deleteBooking,
-    updateAppointment,
-    updateBooking,
-    createManualAppointment
-} from "@/lib/actions/booking";
+import {
+    handleDeleteAppointment,
+    handleDeleteBooking,
+    handleEditAppointment,
+    handleEditBooking,
+    handleManualReserve,
+    handleUpdateAppointmentStatus,
+    handleUpdateBookingStatus,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
-
-async function handleUpdateAppointmentStatus(formData: FormData) {
-    "use server";
-    const id = formData.get("appointmentId") as string;
-    const status = formData.get("status") as string;
-    await updateAppointmentStatus(id, status);
-}
-
-async function handleUpdateBookingStatus(formData: FormData) {
-    "use server";
-    const id = formData.get("bookingId") as string;
-    const status = formData.get("status") as string;
-    await updateBookingStatus(id, status);
-}
-
-async function handleDeleteAppointment(id: string) {
-    "use server";
-    await deleteAppointment(id);
-}
-
-async function handleDeleteBooking(id: string) {
-    "use server";
-    await deleteBooking(id);
-}
-
-async function handleEditAppointment(id: string, data: Record<string, unknown>) {
-    "use server";
-    await updateAppointment(id, data);
-}
-
-async function handleEditBooking(id: string, data: Record<string, unknown>) {
-    "use server";
-    // For legacy, normalize fields back
-    const customerName = typeof data["customerName"] === "string" ? data["customerName"] : "";
-    const customerEmail = typeof data["customerEmail"] === "string" ? data["customerEmail"] : "";
-    const customerPhone = typeof data["customerPhone"] === "string" ? data["customerPhone"] : "";
-
-    const slotDateStr = typeof data["slotDate"] === "string" ? data["slotDate"] : "";
-
-    const serviceNameRaw = typeof data["serviceName"] === "string" ? data["serviceName"] : undefined;
-    let vaccineTitle: string | undefined;
-    const vaccineObj = data["vaccineId"];
-    if (vaccineObj && typeof vaccineObj === "object") {
-        const title = (vaccineObj as Record<string, unknown>)["title"];
-        if (typeof title === "string") vaccineTitle = title;
-    }
-
-    const updateData = {
-        customerName,
-        customerEmail,
-        customerPhone,
-        bookingDate: new Date(`${slotDateStr}T00:00:00`),
-        serviceName: serviceNameRaw || vaccineTitle,
-    };
-    await updateBooking(id, updateData);
-}
-
-async function handleManualReserve(formData: FormData) {
-    "use server";
-
-    const vaccineId = String(formData.get("vaccineId") || "");
-    const slotDate = String(formData.get("slotDate") || "");
-    const slotTime = String(formData.get("slotTime") || "");
-    const customerName = String(formData.get("customerName") || "");
-    const customerEmail = String(formData.get("customerEmail") || "");
-    const customerPhone = String(formData.get("customerPhone") || "");
-    const notes = String(formData.get("notes") || "");
-
-    const result = await createManualAppointment({
-        vaccineId,
-        slotDate,
-        slotTime,
-        customerName,
-        customerEmail,
-        customerPhone,
-        notes,
-    });
-
-    if (!result.success) {
-        throw new Error(result.error || "Failed to reserve slot");
-    }
-}
 
 export default async function AppointmentsPage() {
     await connectToDatabase();

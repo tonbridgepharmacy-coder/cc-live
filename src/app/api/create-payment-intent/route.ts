@@ -63,30 +63,61 @@ export async function POST(request: Request) {
             config = await SlotConfig.create({});
         }
 
-        // ─── Cleanup: Cancel expired PENDING appointments to free slots ───
-        const expiredPending = await Appointment.find({
-            status: "PENDING",
-            lockedUntil: { $lte: new Date() },
-        });
-
-        for (const expired of expiredPending) {
-            // Release inventory if batch was reserved
-            if (expired.batchId) {
-                try {
-                    await releaseStock(
-                        expired.vaccineId.toString(),
-                        expired.batchId.toString(),
-                        expired._id.toString()
-                    );
-                } catch (e) {
-                    console.error(`Failed to release stock for expired appointment ${expired._id}:`, e);
-                }
+        // ─── Lightweight cleanup to keep checkout fast ───
+        // Fast-path: cancel expired pending appointments that do not hold reserved stock.
+        await Appointment.updateMany(
+            {
+                status: "PENDING",
+                lockedUntil: { $lte: new Date() },
+                batchId: { $exists: false },
+            },
+            {
+                $set: {
+                    status: "CANCELLED",
+                    paymentStatus: "FAILED",
+                },
+                $unset: {
+                    lockedUntil: "",
+                },
             }
-            expired.status = "CANCELLED";
-            expired.paymentStatus = "FAILED";
-            expired.lockedUntil = undefined;
-            await expired.save();
-            console.log(`🧹 Cleaned up expired PENDING appointment: ${expired._id}`);
+        );
+
+        // Slow-path: process only a small batch with inventory locks to avoid long checkout latency.
+        const expiredPendingWithBatch = await Appointment.find(
+            {
+                status: "PENDING",
+                lockedUntil: { $lte: new Date() },
+                batchId: { $exists: true, $ne: null },
+            },
+            { _id: 1, vaccineId: 1, batchId: 1 }
+        )
+            .sort({ lockedUntil: 1 })
+            .limit(10)
+            .lean();
+
+        for (const expired of expiredPendingWithBatch) {
+            try {
+                await releaseStock(
+                    String(expired.vaccineId),
+                    String(expired.batchId),
+                    String(expired._id)
+                );
+            } catch (e) {
+                console.error(`Failed to release stock for expired appointment ${expired._id}:`, e);
+            }
+
+            await Appointment.updateOne(
+                { _id: expired._id, status: "PENDING" },
+                {
+                    $set: {
+                        status: "CANCELLED",
+                        paymentStatus: "FAILED",
+                    },
+                    $unset: {
+                        lockedUntil: "",
+                    },
+                }
+            );
         }
 
         // Count existing confirmed + actively locked bookings for this slot

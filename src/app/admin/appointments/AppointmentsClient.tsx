@@ -97,6 +97,7 @@ export default function AppointmentsClient({
     });
     const [reserveError, setReserveError] = useState<string | null>(null);
     const [reserveSuccess, setReserveSuccess] = useState<string | null>(null);
+    const [reserveBanner, setReserveBanner] = useState<string | null>(null);
     const [reserveSubmitting, setReserveSubmitting] = useState(false);
     const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
 
@@ -162,6 +163,19 @@ export default function AppointmentsClient({
             cancelled = true;
         };
     }, [reserveForm.slotDate]);
+
+    useEffect(() => {
+        if (!reserveBanner) return;
+        const timer = window.setTimeout(() => setReserveBanner(null), 4500);
+        return () => window.clearTimeout(timer);
+    }, [reserveBanner]);
+
+    const closeReserveModal = () => {
+        setIsReserveModalOpen(false);
+        setReserveSuccess(null);
+        setReserveError(null);
+        setReserveForm((prev) => ({ ...prev, slotTime: "", notes: "" }));
+    };
 
     // Normalizing legacy bookings to match Appointment interface for consistent rendering
     const normalizedLegacy: AppointmentItem[] = legacyBookings.map((lb) => ({
@@ -461,13 +475,19 @@ export default function AppointmentsClient({
             formData.append("notes", reserveForm.notes);
 
             await onManualReserve(formData);
-            setReserveSuccess("Slot reserved successfully.");
+            const successMessage = `Slot reserved for ${format(new Date(reserveForm.slotDate), "dd MMM yyyy")} at ${reserveForm.slotTime}.`;
+            setReserveSuccess(successMessage);
+            setReserveBanner(successMessage);
 
             setReserveForm((prev) => ({
                 ...prev,
                 slotTime: "",
                 notes: "",
             }));
+
+            window.setTimeout(() => {
+                closeReserveModal();
+            }, 1200);
         } catch (err: unknown) {
             setReserveError(getErrorMessage(err));
         } finally {
@@ -491,6 +511,12 @@ export default function AppointmentsClient({
                     Reserve a Slot
                 </button>
             </div>
+
+            {reserveBanner && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+                    {reserveBanner}
+                </div>
+            )}
 
             {/* Filters and Search */}
             <div className="grid grid-cols-1 xl:grid-cols-[240px_260px_minmax(0,1fr)] gap-4">
@@ -783,12 +809,7 @@ export default function AppointmentsClient({
                                 <p className="text-sm text-slate-500 font-medium tracking-tight">This creates a confirmed appointment to block a date/time so customers can’t book it.</p>
                             </div>
                             <button 
-                                onClick={() => {
-                                    setIsReserveModalOpen(false);
-                                    setReserveSuccess(null);
-                                    setReserveError(null);
-                                    setReserveForm((prev) => ({ ...prev, slotTime: "", notes: "" }));
-                                }}
+                                onClick={closeReserveModal}
                                 className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-200 text-slate-500 transition-colors"
                             >
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -931,11 +952,7 @@ export default function AppointmentsClient({
                             <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setIsReserveModalOpen(false);
-                                        setReserveSuccess(null);
-                                        setReserveError(null);
-                                    }}
+                                    onClick={closeReserveModal}
                                     className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all"
                                 >
                                     Cancel

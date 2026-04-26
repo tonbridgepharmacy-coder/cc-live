@@ -4,7 +4,7 @@ import { getActiveJobs } from "@/lib/actions/job";
 import { Search, MapPin, Clock, ArrowRight, FileText } from "lucide-react";
 import { format } from "date-fns";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function CareersPage() {
     const res = await getActiveJobs();

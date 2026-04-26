@@ -5,7 +5,7 @@ import { MapPin, Clock, ArrowLeft, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import ApplyForm from "./ApplyForm";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function JobDetailsPage({ params }: { params: { slug: string } }) {
     const resolvedParams = await params;
