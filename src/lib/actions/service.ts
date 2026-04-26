@@ -17,6 +17,10 @@ if (!cached) {
     cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
+function escapeRegex(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 async function connectToDatabase() {
     if (!MONGO_URI) return null;
     if (cached.conn) return cached.conn;
@@ -114,18 +118,21 @@ export async function getPublishedServices() {
 
 export async function getServiceBySlug(slug: string) {
     try {
-        const cachedFetch = unstable_cache(
-            async () => {
-                await connectToDatabase();
-                const service = await Service.findOne({ slug }).populate('category');
-                return service ? JSON.parse(JSON.stringify(service)) : null;
-            },
-            [`service-${slug}`],
-            { tags: ['services'] }
-        );
-        const service = await cachedFetch();
+        const db = await connectToDatabase();
+        if (!db) {
+            return { success: false, error: "Database connection is not available" };
+        }
+
+        const decodedSlug = decodeURIComponent(slug || "").trim();
+        if (!decodedSlug) {
+            return { success: false, error: "Service not found" };
+        }
+
+        const slugPattern = new RegExp(`^${escapeRegex(decodedSlug)}$`, "i");
+        const service = await Service.findOne({ slug: slugPattern }).populate('category').lean();
+
         if (!service) return { success: false, error: "Service not found" };
-        return { success: true, service };
+        return { success: true, service: JSON.parse(JSON.stringify(service)) };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
