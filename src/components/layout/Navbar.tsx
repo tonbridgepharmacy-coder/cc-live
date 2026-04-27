@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { siteConfig } from "@/config/site";
-import { serviceCategories } from "@/lib/mock-data";
 
 // ─── Icons (inline SVG for zero-dependency) ──
 const PhoneIcon = () => (
@@ -72,7 +71,11 @@ export default function Navbar() {
     // Don't show public navbar on admin pages
     if (pathname?.startsWith("/admin")) return null;
 
-    const activeCategories = serviceCategories.filter((c) => c.isActive);
+    const isLinkActive = (href: string) => {
+        if (!pathname) return false;
+        if (href === "/") return pathname === "/";
+        return pathname === href || pathname.startsWith(`${href}/`);
+    };
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50">
@@ -152,7 +155,12 @@ export default function Navbar() {
                                 <Link
                                     key={link.label}
                                     href={link.href}
-                                    className="px-3.5 py-2.5 text-sm font-medium text-text-secondary hover:text-primary transition-colors rounded-lg hover:bg-primary/5"
+                                    aria-current={isLinkActive(link.href) ? "page" : undefined}
+                                    className={`px-3.5 py-2.5 text-sm font-medium transition-colors rounded-lg ${
+                                        isLinkActive(link.href)
+                                            ? "text-primary bg-primary/10"
+                                            : "text-text-secondary hover:text-primary hover:bg-primary/5"
+                                    }`}
                                 >
                                     {link.label}
                                 </Link>
@@ -197,7 +205,12 @@ export default function Navbar() {
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                className="block px-3 py-3 text-sm font-medium text-text-secondary hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                                aria-current={isLinkActive(link.href) ? "page" : undefined}
+                                className={`block px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
+                                    isLinkActive(link.href)
+                                        ? "text-primary bg-primary/10"
+                                        : "text-text-secondary hover:text-primary hover:bg-primary/5"
+                                }`}
                                 onClick={() => setIsMobileOpen(false)}
                             >
                                 {link.label}

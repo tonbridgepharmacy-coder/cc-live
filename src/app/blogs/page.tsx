@@ -5,7 +5,7 @@ import { ArrowRight, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function BlogsPage() {
     const res = await getPublishedBlogs();

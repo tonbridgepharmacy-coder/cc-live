@@ -77,6 +77,13 @@ interface Slot {
     total: number;
 }
 
+interface PatientFormErrors {
+    name?: string;
+    email?: string;
+    phone?: string;
+    notes?: string;
+}
+
 // ─── Main Booking Component Wrapper (for Suspense) ───
 export default function BookingForm(props: any) {
     return (
@@ -88,30 +95,20 @@ export default function BookingForm(props: any) {
 
 // ─── Inner Booking Component ───
 function BookingFormInner({
-    services = [],
     vaccines = []
 }: {
-    services?: any[],
     vaccines?: any[]
 }) {
     const searchParams = useSearchParams();
     const serviceIdParam = searchParams.get("serviceId");
 
-    // All possible services (Priority: Vaccines, then general consultations)
-    const allServices = [
+    const vaccineOptions = [
         ...vaccines.map((v: any) => ({
             ...v,
             id: v._id || v.id,
             type: "vaccine",
             price: v.price ?? 0,
             title: v.title
-        })),
-        ...services.map((s: any) => ({
-            ...s,
-            id: s._id || s.id,
-            type: "service",
-            price: s.price ?? 0,
-            title: s.title
         })),
     ];
 
@@ -132,20 +129,21 @@ function BookingFormInner({
         phone: "",
         notes: "",
     });
+    const [formErrors, setFormErrors] = useState<PatientFormErrors>({});
 
     // ─── Automated Service Selection Logic ───
     useEffect(() => {
         if (!selectedService) {
             let initialService = null;
-            if (serviceIdParam && allServices.length > 0) {
-                initialService = allServices.find((s: any) => s.id === serviceIdParam);
+            if (serviceIdParam && vaccineOptions.length > 0) {
+                initialService = vaccineOptions.find((s: any) => s.id === serviceIdParam);
             }
-            if (!initialService && allServices.length > 0) {
-                initialService = allServices[0]; // Default to first available
+            if (!initialService && vaccineOptions.length > 0) {
+                initialService = vaccineOptions[0]; // Default to first available vaccine
             }
             setSelectedService(initialService);
         }
-    }, [serviceIdParam, allServices.length, selectedService]);
+    }, [serviceIdParam, vaccineOptions.length, selectedService]);
 
     // Slot availability state
     const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
@@ -251,12 +249,39 @@ function BookingFormInner({
     const handleDetailsSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedService) return;
-        if (!canBookOnline) {
-            setPaymentError("Online booking is available for vaccines only. Please contact the clinic for this service.");
+
+        const trimmedName = formData.name.trim();
+        const trimmedEmail = formData.email.trim();
+        const phoneDigits = formData.phone.replace(/\D/g, "");
+        const trimmedNotes = formData.notes.trim();
+        const nextErrors: PatientFormErrors = {};
+
+        if (trimmedName.length < 2) {
+            nextErrors.name = "Please enter at least 2 characters for full name.";
+        }
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(trimmedEmail)) {
+            nextErrors.email = "Please enter a valid email address.";
+        }
+
+        if (phoneDigits.length !== 10) {
+            nextErrors.phone = "Contact number must be exactly 10 digits.";
+        }
+
+        if (trimmedNotes.length > 500) {
+            nextErrors.notes = "Medical notes cannot exceed 500 characters.";
+        }
+
+        if (Object.keys(nextErrors).length > 0) {
+            setFormErrors(nextErrors);
             return;
         }
+
+        setFormErrors({});
+
         if (!selectedService.id || !isMongoObjectId(String(selectedService.id))) {
-            setPaymentError("Please select a valid appointment service before proceeding.");
+            setPaymentError("Please select a valid vaccine before proceeding.");
             return;
         }
 
@@ -273,8 +298,8 @@ function BookingFormInner({
                     time: selectedTime,
                     customerName: formData.name,
                     customerEmail: formData.email,
-                    customerPhone: formData.phone,
-                    notes: formData.notes || undefined,
+                    customerPhone: phoneDigits,
+                    notes: trimmedNotes || undefined,
                 }),
             });
 
@@ -384,61 +409,13 @@ function BookingFormInner({
                 {/* ─── Stage 1: Service + Date & Time ─── */}
                 {step === 1 && (
                     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* Service Selector */}
-                        <section className="bg-slate-50 rounded-2xl border border-slate-100 p-6 sm:p-8">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm">0</div>
-                                <h2 className="text-xl font-black text-slate-900 tracking-tight">Select Service</h2>
-                            </div>
-
-                            <select
-                                value={selectedService?.id ? String(selectedService.id) : ""}
-                                onChange={(e) => {
-                                    const next = allServices.find((s: any) => String(s.id) === e.target.value);
-                                    setSelectedService(next || null);
-                                }}
-                                aria-label="Select service"
-                                title="Select service"
-                                className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold"
-                                disabled={allServices.length === 0}
-                            >
-                                <option value="" disabled>
-                                    {allServices.length === 0 ? "No services available" : "Choose a service"}
-                                </option>
-
-                                {vaccines.length > 0 && (
-                                    <optgroup label="Vaccines">
-                                        {vaccines.map((v: any) => {
-                                            const id = String(v._id || v.id);
-                                            return (
-                                                <option key={id} value={id}>
-                                                    {v.title} — £{v.price ?? 0}
-                                                </option>
-                                            );
-                                        })}
-                                    </optgroup>
-                                )}
-
-                                {services.length > 0 && (
-                                    <optgroup label="Services (call to book)">
-                                        {services.map((s: any) => {
-                                            const id = String(s._id || s.id);
-                                            return (
-                                                <option key={id} value={id}>
-                                                    {s.title}
-                                                </option>
-                                            );
-                                        })}
-                                    </optgroup>
-                                )}
-                            </select>
-
-                            {allServices.length === 0 && (
-                                <p className="mt-4 text-sm font-black text-red-600">
-                                    No bookable service is available right now. Please contact the clinic.
+                        {vaccineOptions.length === 0 && (
+                            <section className="bg-red-50 rounded-2xl border border-red-100 p-6 sm:p-8">
+                                <p className="text-sm font-black text-red-700">
+                                    No vaccines are available for online booking right now. Please contact the clinic.
                                 </p>
-                            )}
-                        </section>
+                            </section>
+                        )}
 
                         <div className="grid lg:grid-cols-2 gap-12">
                             {/* Date Picker */}
@@ -591,16 +568,7 @@ function BookingFormInner({
                         </div>
 
                         {/* Stage 1 Footer */}
-                        <div className="pt-10 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-8">
-                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Appointment for</span>
-                                <div className="flex items-center gap-3">
-                                     <span className="font-black text-slate-900 border-b-4 border-secondary/20 pb-1 text-lg tracking-tight">{selectedService?.title || "Select a service above"}</span>
-                                     {selectedService?.price > 0 && (
-                                         <span className="bg-primary/10 text-primary px-3 py-1 rounded-xl text-xs font-black">£{selectedService.price}</span>
-                                     )}
-                                </div>
-                            </div>
+                        <div className="pt-10 border-t border-slate-100 flex justify-end">
                             <button
                                 disabled={!selectedService || !canBookOnline || !selectedTime}
                                 onClick={handleStep1Submit}
@@ -636,9 +604,17 @@ function BookingFormInner({
                                                 required
                                                 placeholder="Enter full name"
                                                 value={formData.name}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, name: e.target.value });
+                                                    if (formErrors.name) {
+                                                        setFormErrors((prev) => ({ ...prev, name: undefined }));
+                                                    }
+                                                }}
+                                                minLength={2}
+                                                maxLength={80}
                                                 className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold placeholder:text-slate-300"
                                             />
+                                            {formErrors.name && <p className="mt-2 text-xs font-bold text-red-600">{formErrors.name}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Email Address</label>
@@ -647,9 +623,16 @@ function BookingFormInner({
                                                 required
                                                 placeholder="patient@medical.com"
                                                 value={formData.email}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, email: e.target.value });
+                                                    if (formErrors.email) {
+                                                        setFormErrors((prev) => ({ ...prev, email: undefined }));
+                                                    }
+                                                }}
+                                                maxLength={120}
                                                 className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold placeholder:text-slate-300"
                                             />
+                                            {formErrors.email && <p className="mt-2 text-xs font-bold text-red-600">{formErrors.email}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Contact Number</label>
@@ -658,9 +641,20 @@ function BookingFormInner({
                                                 required
                                                 placeholder="+44 7700 900XXX"
                                                 value={formData.phone}
-                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                onChange={(e) => {
+                                                    const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                                    setFormData({ ...formData, phone: digitsOnly });
+                                                    if (formErrors.phone) {
+                                                        setFormErrors((prev) => ({ ...prev, phone: undefined }));
+                                                    }
+                                                }}
+                                                inputMode="numeric"
+                                                pattern="\d{10}"
+                                                minLength={10}
+                                                maxLength={10}
                                                 className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold placeholder:text-slate-300"
                                             />
+                                            {formErrors.phone && <p className="mt-2 text-xs font-bold text-red-600">{formErrors.phone}</p>}
                                         </div>
                                     </div>
 
@@ -671,9 +665,23 @@ function BookingFormInner({
                                                 rows={10}
                                                 placeholder="Allergies, chronic conditions, or specific requirements..."
                                                 value={formData.notes}
-                                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, notes: e.target.value });
+                                                    if (formErrors.notes) {
+                                                        setFormErrors((prev) => ({ ...prev, notes: undefined }));
+                                                    }
+                                                }}
+                                                maxLength={500}
                                                 className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none resize-none font-bold placeholder:text-slate-300"
                                             />
+                                            <div className="mt-2 flex items-center justify-between gap-4">
+                                                {formErrors.notes ? (
+                                                    <p className="text-xs font-bold text-red-600">{formErrors.notes}</p>
+                                                ) : (
+                                                    <span />
+                                                )}
+                                                <p className="text-[10px] font-bold text-slate-400">{formData.notes.length}/500</p>
+                                            </div>
                                         </div>
                                     </div>
 

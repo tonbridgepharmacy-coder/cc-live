@@ -2,6 +2,7 @@
 
 import mongoose from "mongoose";
 import Service, { IService } from "@/models/Service";
+import "@/models/Category";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
