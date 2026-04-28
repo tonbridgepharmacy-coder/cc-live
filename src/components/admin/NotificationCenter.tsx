@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Bell, Calendar, MessageSquare, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { getRecentNotifications } from "@/lib/actions/notifications";
+import { getRecentNotifications, markAllNotificationsAsRead } from "@/lib/actions/notifications";
 import { formatDistanceToNow } from "date-fns";
 
 export default function NotificationCenter() {
@@ -11,6 +11,16 @@ export default function NotificationCenter() {
     const [isOpen, setIsOpen] = useState(false);
     const [hasUnread, setHasUnread] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const handleMarkAllAsRead = async () => {
+        try {
+            await markAllNotificationsAsRead();
+            setNotifications([]);
+            setHasUnread(false);
+        } catch (error) {
+            console.error("Failed to mark all as read:", error);
+        }
+    };
 
     const fetchNotifications = async () => {
         const data = await getRecentNotifications();
@@ -111,7 +121,10 @@ export default function NotificationCenter() {
 
                     {notifications.length > 0 && (
                         <div className="p-3 bg-slate-50/50 border-t border-slate-100">
-                            <button className="w-full py-2 text-[10px] font-black text-slate-500 hover:text-primary transition-colors text-center uppercase tracking-widest">
+                            <button 
+                                onClick={handleMarkAllAsRead}
+                                className="w-full py-2 text-[10px] font-black text-slate-500 hover:text-primary transition-colors text-center uppercase tracking-widest"
+                            >
                                 Mark all as read
                             </button>
                         </div>
