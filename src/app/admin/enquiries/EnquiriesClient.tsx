@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Search, Filter } from "lucide-react";
 import { format } from "date-fns";
 import EnquiryActions from "@/components/admin/EnquiryActions";
 
@@ -24,6 +24,8 @@ interface EnquiriesClientProps {
 export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }: EnquiriesClientProps) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [busy, setBusy] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
 
     const statusColors: Record<string, string> = {
         pending: "bg-amber-50 text-amber-600 border-amber-100",
@@ -34,14 +36,28 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
         cold: "bg-blue-50 text-blue-500 border-blue-100",
     };
 
+    const filteredEnquiries = useMemo(() => {
+        return enquiries.filter((enquiry) => {
+            const matchesSearch = 
+                enquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                enquiry.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                enquiry.message?.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const matchesStatus = statusFilter === "all" || enquiry.status === statusFilter;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [enquiries, searchTerm, statusFilter]);
+
     const allSelected = useMemo(
-        () => enquiries.length > 0 && enquiries.every((item) => selectedIds.has(item._id)),
-        [enquiries, selectedIds]
+        () => filteredEnquiries.length > 0 && filteredEnquiries.every((item) => selectedIds.has(item._id)),
+        [filteredEnquiries, selectedIds]
     );
 
     const selectedRows = useMemo(
-        () => enquiries.filter((item) => selectedIds.has(item._id)),
-        [enquiries, selectedIds]
+        () => filteredEnquiries.filter((item) => selectedIds.has(item._id)),
+        [filteredEnquiries, selectedIds]
     );
 
     const toggleSelectAll = () => {
@@ -49,7 +65,7 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
             setSelectedIds(new Set());
             return;
         }
-        setSelectedIds(new Set(enquiries.map((e) => e._id)));
+        setSelectedIds(new Set(filteredEnquiries.map((e) => e._id)));
     };
 
     const toggleSelectOne = (id: string) => {
@@ -62,7 +78,7 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
     };
 
     const handleExportCsv = () => {
-        const rows = selectedRows.length > 0 ? selectedRows : enquiries;
+        const rows = selectedRows.length > 0 ? selectedRows : filteredEnquiries;
         if (rows.length === 0) {
             alert("No enquiries to export.");
             return;
@@ -141,6 +157,33 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
 
     return (
         <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Search by name, email, or message..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium"
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <Filter className="text-slate-400" size={18} />
+                    <select
+                        title="Filter by status"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="bg-white border border-slate-200 px-4 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-bold text-slate-700 min-w-35"
+                    >
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="hold">Hold</option>
+                    </select>
+                </div>
+            </div>
+
             <div className="bg-white border border-border rounded-2xl px-4 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <p className="text-sm font-bold text-slate-600">
                     {selectedRows.length > 0
@@ -209,7 +252,7 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {enquiries.length === 0 ? (
+                            {filteredEnquiries.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="p-20 text-center">
                                         <div className="flex flex-col items-center justify-center">
@@ -218,13 +261,19 @@ export default function EnquiriesClient({ enquiries, onStatusUpdate, onDelete }:
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-3.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293H10.414a1 1 0 01-.707-.293L7.293 13.293A1 1 0 006.586 13H4" />
                                                 </svg>
                                             </div>
-                                            <h3 className="text-lg font-bold text-slate-700">No enquiries yet</h3>
-                                            <p className="text-slate-500 text-sm mt-1">New enquiries will appear here as they come in.</p>
+                                            <h3 className="text-lg font-bold text-slate-700">
+                                                {searchTerm || statusFilter !== "all" ? "No matches found" : "No enquiries yet"}
+                                            </h3>
+                                            <p className="text-slate-500 text-sm mt-1">
+                                                {searchTerm || statusFilter !== "all" 
+                                                    ? "Try adjusting your search or filters." 
+                                                    : "New enquiries will appear here as they come in."}
+                                            </p>
                                         </div>
                                     </td>
                                 </tr>
                             ) : (
-                                enquiries.map((enquiry) => (
+                                filteredEnquiries.map((enquiry) => (
                                     <tr key={enquiry._id} className="group hover:bg-slate-50/50 transition-colors">
                                         <td className="p-5 align-top">
                                             <input

@@ -47,3 +47,17 @@ export async function getRecentNotifications() {
         return [];
     }
 }
+
+export async function markAllNotificationsAsRead() {
+    await dbConnect();
+    try {
+        await Promise.all([
+            Appointment.updateMany({ status: "PENDING" }, { $set: { status: "read" } }),
+            Enquiry.updateMany({ status: "pending" }, { $set: { status: "read" } })
+        ]);
+        return { success: true };
+    } catch (error) {
+        console.error("Error marking all notifications as read:", error);
+        return { success: false };
+    }
+}

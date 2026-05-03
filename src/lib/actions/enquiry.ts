@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db";
 import Enquiry, { IEnquiry } from "@/models/Enquiry";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/email";
+import { generateGoogleCalendarTemplateLink } from "@/lib/googleCalendar";
 
 export async function submitEnquiry(data: Partial<IEnquiry>) {
     const conn = await dbConnect();
@@ -40,21 +41,38 @@ export async function submitEnquiry(data: Partial<IEnquiry>) {
         const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER;
         if (adminEmail) {
             try {
+                // Generate a calendar link for tomorrow as a default follow-up date
+                const followUpDate = new Date();
+                followUpDate.setDate(followUpDate.getDate() + 1);
+                const gcalLink = generateGoogleCalendarTemplateLink({
+                    serviceTitle: `Follow up: ${data.name}`,
+                    slotDate: followUpDate,
+                    slotTime: "10:00",
+                    details: `Enquiry follow-up with ${data.name}. \nEmail: ${data.email}\nPhone: ${data.phone || "N/A"}\n\nMessage: ${data.message}`,
+                });
+
                 await sendEmail({
                     to: adminEmail,
                     subject: `New Enquiry from ${data.name}`,
                     html: `
-                        <div style="font-family: sans-serif; color: #333;">
-                            <h2 style="color: #1d4ed8;">New Enquiry Received</h2>
-                            <p>A new enquiry has been submitted through the website.</p>
-                            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                <p><strong>Name:</strong> ${data.name}</p>
-                                <p><strong>Email:</strong> ${data.email}</p>
-                                <p><strong>Phone:</strong> ${data.phone || "Not provided"}</p>
-                                <p><strong>Subject:</strong> ${data.subject || "General Enquiry"}</p>
-                                <p><strong>Message:</strong> ${data.message}</p>
+                        <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                            <div style="background: #1d4ed8; color: white; padding: 20px;">
+                                <h2 style="margin: 0;">New Enquiry Received</h2>
                             </div>
-                            <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/enquiries" style="background: #1d4ed8; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">View in Admin Dashboard</a></p>
+                            <div style="padding: 24px;">
+                                <p>A new enquiry has been submitted through the website.</p>
+                                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #edf2f7;">
+                                    <p style="margin: 0 0 8px;"><strong>Name:</strong> ${data.name}</p>
+                                    <p style="margin: 0 0 8px;"><strong>Email:</strong> ${data.email}</p>
+                                    <p style="margin: 0 0 8px;"><strong>Phone:</strong> ${data.phone || "Not provided"}</p>
+                                    <p style="margin: 0 0 8px;"><strong>Subject:</strong> ${data.subject || "General Enquiry"}</p>
+                                    <p style="margin: 0;"><strong>Message:</strong><br/>${data.message}</p>
+                                </div>
+                                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/enquiries" style="background: #1d4ed8; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">View in Admin Panel</a>
+                                    <a href="${gcalLink}" style="background: #f1f5f9; color: #1e293b; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; border: 1px solid #e2e8f0;">🗓️ Add to Calendar</a>
+                                </div>
+                            </div>
                         </div>
                     `
                 });
