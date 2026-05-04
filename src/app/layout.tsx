@@ -10,6 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://clarkeandcoleman.co.uk"),
   title: {
     default: "Clarke & Coleman Pharmacy | Trusted UK Healthcare",
     template: "%s | Clarke & Coleman Pharmacy",
@@ -19,19 +20,57 @@ export const metadata: Metadata = {
   keywords: [
     "pharmacy",
     "UK pharmacy",
+    "Tonbridge pharmacy",
     "travel vaccines",
+    "travel vaccinations",
     "health clinic",
     "Clarke Coleman",
     "healthcare",
     "prescriptions",
+    "clinical services",
+    "online booking pharmacy",
   ],
+  authors: [{ name: "Clarke & Coleman Pharmacy", url: "https://clarkeandcoleman.co.uk" }],
+  creator: "Clarke & Coleman Pharmacy",
+  publisher: "Clarke & Coleman Pharmacy",
+  alternates: {
+    canonical: "https://clarkeandcoleman.co.uk",
+  },
   openGraph: {
     title: "Clarke & Coleman Pharmacy | Trusted UK Healthcare",
     description:
       "Your trusted partner in health and wellness. Expert pharmaceutical care and clinical services.",
+    url: "https://clarkeandcoleman.co.uk",
     type: "website",
     locale: "en_GB",
     siteName: "Clarke & Coleman Pharmacy",
+    images: [
+      {
+        url: "/og-default.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Clarke & Coleman Pharmacy",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clarke & Coleman Pharmacy | Trusted UK Healthcare",
+    description:
+      "Your trusted partner in health and wellness. Expert pharmaceutical care and clinical services.",
+    images: ["/og-default.jpg"],
+    site: "@clarkecoleman",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

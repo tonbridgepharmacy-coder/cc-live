@@ -45,6 +45,8 @@ export async function POST(request: Request) {
         }
         
         const price = (item as any)?.price ?? 0;
+        const BOOKING_FEE = 5; // £5 non-refundable booking fee for all appointments
+        const totalAmount = price + BOOKING_FEE;
 
         if (!item) {
             return NextResponse.json(
@@ -192,7 +194,7 @@ export async function POST(request: Request) {
             notes: notes || undefined,
             status: "PENDING",
             paymentStatus: "UNPAID",
-            amountPaid: price,
+            amountPaid: totalAmount,
             lockedUntil,
         });
 
@@ -229,18 +231,22 @@ export async function POST(request: Request) {
             stripeKey === "sk_test_mock_key_for_build" ||
             stripeKey.length < 20;
 
-        if (isMockMode || price <= 0) {
+        if (isMockMode || totalAmount <= BOOKING_FEE) {
+            // Free service — only booking fee (or mock mode)
             console.log(`${price <= 0 ? "Free Booking" : "Mock Payment"} Mode Active — Appointment ID:`, appointment._id);
             return NextResponse.json({
                 clientSecret: "free_or_mock_secret_" + Date.now(),
                 appointmentId: appointment._id.toString(),
                 isMock: true,
+                bookingFee: BOOKING_FEE,
+                servicePrice: price,
+                totalAmount,
             });
         }
 
         // 7. Create Stripe PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(price * 100), // pence
+            amount: Math.round(totalAmount * 100), // pence (service price + £5 booking fee)
             currency: "gbp",
             automatic_payment_methods: { enabled: true },
             metadata: {
@@ -248,6 +254,9 @@ export async function POST(request: Request) {
                 vaccineId: vaccineId,
                 customerEmail: customerEmail.toLowerCase(),
                 customerName,
+                servicePrice: String(price),
+                bookingFee: String(BOOKING_FEE),
+                totalAmount: String(totalAmount),
             },
         });
 
@@ -259,6 +268,9 @@ export async function POST(request: Request) {
             clientSecret: paymentIntent.client_secret,
             appointmentId: appointment._id.toString(),
             isMock: false,
+            bookingFee: BOOKING_FEE,
+            servicePrice: price,
+            totalAmount,
         });
     } catch (error: unknown) {
         console.error("Error creating payment intent:", error);

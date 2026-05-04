@@ -1,10 +1,37 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import { getCategories } from "@/lib/actions/category";
 import { getPublishedServices } from "@/lib/actions/service";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import ServicesGrid from "@/components/ui/ServicesGrid";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+    title: "Our Services",
+    description:
+        "Explore the full range of health services at Clarke & Coleman Pharmacy — from NHS prescriptions and health consultations to specialist clinical care. Book online today.",
+    keywords: [
+        "pharmacy services Tonbridge",
+        "NHS services pharmacy",
+        "health consultations",
+        "clinical pharmacy services",
+        "Clarke Coleman services",
+        "pharmacy Kent",
+    ],
+    alternates: { canonical: "https://clarkeandcoleman.co.uk/services" },
+    openGraph: {
+        title: "Our Services | Clarke & Coleman Pharmacy",
+        description: "Expert health and pharmaceutical services in Tonbridge. Book your appointment online.",
+        url: "https://clarkeandcoleman.co.uk/services",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Our Services | Clarke & Coleman Pharmacy",
+        description: "Expert health and pharmaceutical services in Tonbridge. Book your appointment online.",
+    },
+};
 
 export default async function ServicesPage() {
     const [catRes, serRes] = await Promise.all([

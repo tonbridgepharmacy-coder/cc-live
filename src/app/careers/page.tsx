@@ -1,10 +1,36 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getActiveJobs } from "@/lib/actions/job";
 import { Search, MapPin, Clock, ArrowRight, FileText } from "lucide-react";
 import { format } from "date-fns";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = {
+    title: "Careers",
+    description:
+        "Join the Clarke & Coleman Pharmacy team. Browse current job vacancies in pharmacy, healthcare, and support roles in Tonbridge, Kent.",
+    keywords: [
+        "pharmacy jobs Tonbridge",
+        "pharmacy careers Kent",
+        "healthcare jobs Tonbridge",
+        "Clarke Coleman jobs",
+        "pharmacist vacancies",
+    ],
+    alternates: { canonical: "https://clarkeandcoleman.co.uk/careers" },
+    openGraph: {
+        title: "Careers | Clarke & Coleman Pharmacy",
+        description: "Join our team. Browse pharmacy and healthcare job vacancies in Tonbridge, Kent.",
+        url: "https://clarkeandcoleman.co.uk/careers",
+        type: "website",
+    },
+    twitter: {
+        card: "summary",
+        title: "Careers | Clarke & Coleman Pharmacy",
+        description: "Browse pharmacy and healthcare job vacancies in Tonbridge, Kent.",
+    },
+};
 
 export default async function CareersPage() {
     const res = await getActiveJobs();

@@ -5,7 +5,25 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
     title: "Contact Us",
     description:
-        "Get in touch with Clarke & Coleman Pharmacy. Find our pharmacy locations, opening hours, and contact details.",
+        "Get in touch with Clarke & Coleman Pharmacy in Tonbridge. Call us, send a message, or visit us at 140 High St, Tonbridge TN9 1BB.",
+    keywords: [
+        "contact pharmacy Tonbridge",
+        "Clarke Coleman contact",
+        "pharmacy phone number Tonbridge",
+        "pharmacy address Tonbridge",
+    ],
+    alternates: { canonical: "https://clarkeandcoleman.co.uk/contact" },
+    openGraph: {
+        title: "Contact Us | Clarke & Coleman Pharmacy",
+        description: "Get in touch with our pharmacy team in Tonbridge. Call, message, or visit us at 140 High St, Tonbridge TN9 1BB.",
+        url: "https://clarkeandcoleman.co.uk/contact",
+        type: "website",
+    },
+    twitter: {
+        card: "summary",
+        title: "Contact Us | Clarke & Coleman Pharmacy",
+        description: "Get in touch with our pharmacy team in Tonbridge, Kent.",
+    },
 };
 
 export default async function ContactPage() {

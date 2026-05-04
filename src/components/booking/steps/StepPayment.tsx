@@ -44,10 +44,11 @@ const CheckoutForm = ({ amount, onSuccess }: { amount: number; onSuccess: () => 
     );
 };
 
-const StepPayment = ({ setStep, selectedService, selectedDate, selectedTime, formData, isMockPayment, clientSecret, handleBookingSuccess }: any) => {
+const StepPayment = ({ setStep, selectedService, selectedDate, selectedTime, formData, isMockPayment, clientSecret, handleBookingSuccess, bookingFee = 5, servicePrice = 0, totalAmount }: any) => {
+  const total = totalAmount ?? (servicePrice + bookingFee);
   return (
       <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                        <button onClick={() => setStep(2)} className="inline-flex items-center gap-3 text-sm font-black text-slate-400 hover:text-primary mb-10 transition-colors group">
+                        <button onClick={() => setStep(3)} className="inline-flex items-center gap-3 text-sm font-black text-slate-400 hover:text-primary mb-10 transition-colors group">
                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                             </div>
@@ -56,7 +57,7 @@ const StepPayment = ({ setStep, selectedService, selectedDate, selectedTime, for
 
                         <div className="max-w-xl mx-auto">
                             <h2 className="text-4xl font-black text-slate-900 mb-3 text-center tracking-tight">Finalise Booking</h2>
-                            <p className="text-slate-400 text-center font-bold mb-12 uppercase tracking-widest text-xs">Total payable: <span className="text-secondary font-black text-2xl ml-2 tracking-normal lowercase">£{selectedService?.price}</span></p>
+                            <p className="text-slate-400 text-center font-bold mb-12 uppercase tracking-widest text-xs">Total payable: <span className="text-secondary font-black text-2xl ml-2 tracking-normal lowercase">£{total}</span></p>
                             
                             <div className="bg-slate-50 rounded-[48px] p-10 mb-10 border-2 border-slate-100 shadow-inner relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-8 opacity-5 font-black text-8xl pointer-events-none">£</div>
@@ -72,6 +73,24 @@ const StepPayment = ({ setStep, selectedService, selectedDate, selectedTime, for
                                     <div className="flex justify-between items-center text-sm font-black">
                                         <span className="text-slate-400 uppercase tracking-widest text-[10px]">Patient</span>
                                         <span className="text-slate-900">{formData.name}</span>
+                                    </div>
+
+                                    {/* Price breakdown */}
+                                    <div className="pt-4 border-t-2 border-slate-200 space-y-3">
+                                        {servicePrice > 0 && (
+                                            <div className="flex justify-between items-center text-sm font-black">
+                                                <span className="text-slate-400 uppercase tracking-widest text-[10px]">{selectedService?.type === 'vaccine' ? 'Vaccine Fee' : 'Service Fee'}</span>
+                                                <span className="text-slate-900">£{servicePrice}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between items-center text-sm font-black">
+                                            <span className="text-slate-400 uppercase tracking-widest text-[10px]">Booking Fee</span>
+                                            <span className="text-slate-900">£{bookingFee}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-3 border-t border-slate-200">
+                                            <span className="text-slate-900 font-black uppercase tracking-widest text-[10px]">Total</span>
+                                            <span className="text-xl font-black text-secondary">£{total}</span>
+                                        </div>
                                     </div>
                                 </section>
 
@@ -96,7 +115,7 @@ const StepPayment = ({ setStep, selectedService, selectedDate, selectedTime, for
                             ) : (
                                 <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
                                     <CheckoutForm
-                                        amount={selectedService?.price}
+                                        amount={total}
                                         onSuccess={handleBookingSuccess}
                                     />
                                 </Elements>

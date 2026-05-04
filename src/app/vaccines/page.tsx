@@ -1,9 +1,38 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import { getPublishedVaccines } from "@/lib/actions/vaccine";
 import { getPageSetting } from "@/lib/actions/pageSettings";
 import VaccinesGrid from "@/components/ui/VaccinesGrid";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+    title: "Travel Vaccinations & Vaccines",
+    description:
+        "Get expert travel vaccinations and immunisations at Clarke & Coleman Pharmacy, Tonbridge. Yellow fever, typhoid, hepatitis A & B, meningitis, and more. Book online.",
+    keywords: [
+        "travel vaccinations Tonbridge",
+        "travel jabs Kent",
+        "yellow fever vaccine",
+        "typhoid vaccine",
+        "hepatitis vaccine",
+        "flu jab Tonbridge",
+        "NHS vaccinations",
+        "Clarke Coleman vaccines",
+    ],
+    alternates: { canonical: "https://clarkeandcoleman.co.uk/vaccines" },
+    openGraph: {
+        title: "Travel Vaccinations & Vaccines | Clarke & Coleman Pharmacy",
+        description: "Expert travel vaccinations and immunisations in Tonbridge, Kent. Book your appointment online.",
+        url: "https://clarkeandcoleman.co.uk/vaccines",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Travel Vaccinations & Vaccines | Clarke & Coleman Pharmacy",
+        description: "Expert travel vaccinations and immunisations in Tonbridge, Kent.",
+    },
+};
 
 export default async function VaccinesPage() {
     const vaccinesRes = await getPublishedVaccines();

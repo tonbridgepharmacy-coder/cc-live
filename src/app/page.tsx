@@ -1,10 +1,85 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import {
   testimonials,
 } from "@/lib/mock-data";
 import { getGalleryImages } from "@/lib/actions/gallery";
 import LocationMap from "@/components/ui/LocationMap";
+
+export const metadata: Metadata = {
+  title: "Clarke & Coleman Pharmacy | Trusted UK Healthcare in Tonbridge",
+  description:
+    "Clarke & Coleman Pharmacy in Tonbridge offers expert pharmaceutical care, NHS prescriptions, travel vaccinations, health consultations, and online appointment booking.",
+  keywords: [
+    "pharmacy Tonbridge",
+    "NHS pharmacy Tonbridge",
+    "travel vaccinations Tonbridge",
+    "flu jab Tonbridge",
+    "online pharmacy booking",
+    "Clarke Coleman Pharmacy",
+    "prescription delivery Tonbridge",
+    "health clinic Kent",
+  ],
+  alternates: {
+    canonical: "https://clarkeandcoleman.co.uk",
+  },
+  openGraph: {
+    title: "Clarke & Coleman Pharmacy | Trusted UK Healthcare in Tonbridge",
+    description:
+      "Expert pharmaceutical care, travel vaccinations, and health services in Tonbridge, Kent. Book online today.",
+    url: "https://clarkeandcoleman.co.uk",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clarke & Coleman Pharmacy | Trusted UK Healthcare in Tonbridge",
+    description:
+      "Expert pharmaceutical care, travel vaccinations, and health services in Tonbridge, Kent.",
+  },
+};
+
+const localBusinessJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Pharmacy",
+  name: "Clarke & Coleman Pharmacy",
+  url: "https://clarkeandcoleman.co.uk",
+  telephone: siteConfig.phone,
+  email: siteConfig.email,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "140 High St",
+    addressLocality: "Tonbridge",
+    postalCode: "TN9 1BB",
+    addressCountry: "GB",
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 51.1957,
+    longitude: 0.2757,
+  },
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "09:00",
+      closes: "18:30",
+    },
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Saturday"],
+      opens: "09:00",
+      closes: "13:00",
+    },
+  ],
+  sameAs: [
+    siteConfig.social.facebook,
+    siteConfig.social.twitter,
+    siteConfig.social.instagram,
+  ],
+  priceRange: "££",
+  image: "https://clarkeandcoleman.co.uk/og-default.jpg",
+};
 
 // ─── Inline Icons ────────────────────────────
 const ArrowRight = ({ className = "w-4 h-4" }: { className?: string }) => (
@@ -93,6 +168,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+      />
       {/* ═══ HERO ═══ */}
       <section className="relative overflow-hidden pt-28 sm:pt-36 lg:pt-40 pb-20 lg:pb-28">
         {/* Gradient Background — only hero */}

@@ -12,6 +12,25 @@ const { hero, story, values, commitment, enquiry, cta } = aboutData;
 export const metadata: Metadata = {
     title: aboutData.metadata.title,
     description: aboutData.metadata.description,
+    keywords: [
+        "about Clarke Coleman Pharmacy",
+        "pharmacy Tonbridge history",
+        "pharmacy team Tonbridge",
+        "community pharmacy Kent",
+        "Ankit Tyagi pharmacy",
+    ],
+    alternates: { canonical: "https://clarkeandcoleman.co.uk/about" },
+    openGraph: {
+        title: aboutData.metadata.title,
+        description: aboutData.metadata.description,
+        url: "https://clarkeandcoleman.co.uk/about",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: aboutData.metadata.title,
+        description: aboutData.metadata.description,
+    },
 };
 
 // ─── Icons ───────────────────────────────────

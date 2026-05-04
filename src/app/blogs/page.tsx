@@ -1,11 +1,38 @@
 import { getPublishedBlogs } from "@/lib/actions/blog";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { ArrowRight, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import { stripHtmlTags, truncateText } from "@/lib/utils";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = {
+    title: "Health & Wellness Blog",
+    description:
+        "Stay informed with the latest health advice, pharmacy updates, travel clinic news, and wellness tips from the Clarke & Coleman Pharmacy expert team.",
+    keywords: [
+        "pharmacy blog",
+        "health advice",
+        "wellness tips",
+        "travel health news",
+        "pharmacy news Tonbridge",
+        "Clarke Coleman blog",
+    ],
+    alternates: { canonical: "https://clarkeandcoleman.co.uk/blogs" },
+    openGraph: {
+        title: "Health & Wellness Blog | Clarke & Coleman Pharmacy",
+        description: "Expert health advice, travel clinic news, and wellness tips from our pharmacy team.",
+        url: "https://clarkeandcoleman.co.uk/blogs",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Health & Wellness Blog | Clarke & Coleman Pharmacy",
+        description: "Expert health advice and wellness tips from Clarke & Coleman Pharmacy.",
+    },
+};
 
 export default async function BlogsPage() {
     const res = await getPublishedBlogs();

@@ -152,6 +152,9 @@ function BookingFormInner({
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [appointmentId, setAppointmentId] = useState<string | null>(null);
     const [isMockPayment, setIsMockPayment] = useState(false);
+    const [bookingFee, setBookingFee] = useState(5);
+    const [servicePrice, setServicePrice] = useState(0);
+    const [totalAmount, setTotalAmount] = useState(5);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -344,6 +347,9 @@ function BookingFormInner({
             setClientSecret(data.clientSecret);
             setAppointmentId(data.appointmentId);
             if (data.isMock) setIsMockPayment(true);
+            setBookingFee(data.bookingFee ?? 5);
+            setServicePrice(data.servicePrice ?? 0);
+            setTotalAmount(data.totalAmount ?? (data.servicePrice ?? 0) + (data.bookingFee ?? 5));
             setStep(4);
         } catch (err: any) {
             setPaymentError("An error occurred during secure checkout. Please try again.");
@@ -460,6 +466,9 @@ function BookingFormInner({
                         isMockPayment={isMockPayment}
                         clientSecret={clientSecret}
                         handleBookingSuccess={handleBookingSuccess}
+                        bookingFee={bookingFee}
+                        servicePrice={servicePrice}
+                        totalAmount={totalAmount}
                     />
                 )}
             </div>
