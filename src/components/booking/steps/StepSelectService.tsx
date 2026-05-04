@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 
 interface StepSelectServiceProps {
     allOptions: any[];
@@ -11,9 +11,34 @@ interface StepSelectServiceProps {
 }
 
 const StepSelectService = ({ allOptions, filteredOptions, selectedService, setSelectedService, serviceSearch, setServiceSearch, onContinue }: StepSelectServiceProps) => {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const list = listRef.current;
+      if (!list) return;
+      const item = list.querySelector('[data-selected="true"]') as HTMLElement | null;
+      if (!item) return;
+      // offsetTop is relative to offsetParent; list has position:relative so this is correct
+      list.scrollTop = item.offsetTop - list.clientHeight / 2 + item.offsetHeight / 2;
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="animate-in fade-in duration-300">
-        <h2 className="text-2xl font-black text-slate-900 mb-1">Choose a Service</h2>
+        {/* Heading + selected chip */}
+        <div className="flex items-center gap-3 flex-wrap mb-1">
+            <h2 className="text-2xl font-black text-slate-900">Choose a Service</h2>
+            {selectedService && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    {selectedService.title}
+                </span>
+            )}
+        </div>
         <p className="text-sm text-slate-400 mb-6">Select the service or vaccine you&apos;d like to book.</p>
 
         {allOptions.length === 0 && (
@@ -37,7 +62,7 @@ const StepSelectService = ({ allOptions, filteredOptions, selectedService, setSe
         </div>
 
         {/* Scrollable list */}
-        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1 py-1">
+        <div ref={listRef} className="relative flex flex-col gap-2 max-h-80 overflow-y-auto pr-1 py-1">
             {filteredOptions.length === 0 && (
                 <p className="text-center text-sm text-slate-400 py-10">No matches found</p>
             )}
@@ -46,6 +71,7 @@ const StepSelectService = ({ allOptions, filteredOptions, selectedService, setSe
                 return (
                     <button
                         key={option.id}
+                        data-selected={isSelected ? "true" : undefined}
                         type="button"
                         onClick={() => setSelectedService(option)}
                         className={`w-full flex items-center gap-4 px-5 py-4 text-left rounded-2xl border-2 transition-all ${
