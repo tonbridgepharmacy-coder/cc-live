@@ -10,6 +10,12 @@ import {
 } from "@stripe/react-stripe-js";
 import { format, addDays, startOfToday, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isBefore } from "date-fns";
 import { useSearchParams } from "next/navigation";
+import BookingProgress from "./BookingProgress";
+import StepSelectService from "./steps/StepSelectService";
+import StepSchedule from "./steps/StepSchedule";
+import StepDetails from "./steps/StepDetails";
+import StepPayment from "./steps/StepPayment";
+
 
 const isMongoObjectId = (value: string) => /^[a-f\d]{24}$/i.test(value);
 
@@ -264,9 +270,11 @@ function BookingFormInner({
     };
 
     const handleStep1Submit = () => {
-        if (selectedService && canBookOnline && selectedDate && selectedTime) {
-            setStep(2);
-        }
+        if (selectedService) setStep(2);
+    };
+
+    const handleStep2Submit = () => {
+        if (selectedTime) setStep(3);
     };
 
     const handleDetailsSubmit = async (e: React.FormEvent) => {
@@ -336,7 +344,7 @@ function BookingFormInner({
             setClientSecret(data.clientSecret);
             setAppointmentId(data.appointmentId);
             if (data.isMock) setIsMockPayment(true);
-            setStep(3);
+            setStep(4);
         } catch (err: any) {
             setPaymentError("An error occurred during secure checkout. Please try again.");
         } finally {
@@ -390,471 +398,69 @@ function BookingFormInner({
     return (
         <div className="max-w-5xl mx-auto bg-white rounded-3xl border border-border/60 overflow-hidden shadow-2xl">
             {/* ─── Progress HUD ─── */}
-            <div className="bg-slate-50 border-b border-border/60 p-6 sm:p-8">
-                <div className="flex items-center justify-between max-w-2xl mx-auto relative">
-                    <div className="absolute top-5 left-0 w-full h-0.5 bg-slate-200 -z-0" />
-                    <div 
-                        className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-700 ease-in-out -z-0" 
-                        style={{ width: `${((step - 1) / 2) * 100}%` }}
-                    />
+          <BookingProgress step={step} setStep={setStep} />
 
-                    {["Appointment", "Details", "Payment"].map((label, index) => {
-                        const stepNumber = index + 1;
-                        const isCompleted = step > stepNumber;
-                        const isActive = step === stepNumber;
-                        return (
-                            <div key={label} className="flex flex-col items-center gap-3 relative z-10">
-                                <button
-                                    onClick={() => { if (isCompleted) setStep(stepNumber); }}
-                                    disabled={!isCompleted}
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all shadow-sm ${
-                                        isCompleted
-                                            ? "bg-primary text-white cursor-pointer hover:bg-primary-dark"
-                                            : isActive
-                                                ? "bg-secondary text-white ring-4 ring-secondary/20 scale-110"
-                                                : "bg-white text-slate-400 border-2 border-slate-200"
-                                    }`}
-                                >
-                                    {isCompleted ? "✓" : stepNumber}
-                                </button>
-                                <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                    isActive ? "text-secondary" : isCompleted ? "text-primary" : "text-slate-400"
-                                }`}>
-                                    {label}
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div className="p-6 sm:p-12 min-h-[500px]">
-                {/* ─── Stage 1: Service + Date & Time ─── */}
+            <div className="p-6 sm:p-12 min-h-125">
+                {/* ─── Step 1: Select Service ─── */}
                 {step === 1 && (
-                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {allOptions.length === 0 && (
-                            <section className="bg-red-50 rounded-2xl border border-red-100 p-6 sm:p-8">
-                                <p className="text-sm font-black text-red-700">
-                                    No services are available for online booking right now. Please contact the clinic.
-                                </p>
-                            </section>
-                        )}
-
-                        {/* ─── Service / Vaccine Selector ─── */}
-                        <section>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm">✦</div>
-                                <h2 className="text-xl font-black text-slate-900 tracking-tight">Select a Service or Vaccine</h2>
-                            </div>
-
-                            {/* Search */}
-                            <div className="relative mb-4 max-w-md">
-                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7 7 0 1116.65 16.65z" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    placeholder="Search services &amp; vaccines..."
-                                    value={serviceSearch}
-                                    onChange={(e) => setServiceSearch(e.target.value)}
-                                    className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm font-bold"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
-                                {filteredOptions.map((option: any) => {
-                                    const isSelected = selectedService?.id === option.id;
-                                    return (
-                                        <button
-                                            key={option.id}
-                                            type="button"
-                                            onClick={() => setSelectedService(option)}
-                                            className={`text-left p-4 rounded-2xl border-2 transition-all ${
-                                                isSelected
-                                                    ? "border-primary bg-primary/5 shadow-sm"
-                                                    : "border-slate-200 bg-white hover:border-primary/40"
-                                            }`}
-                                        >
-                                            <div className="flex items-start justify-between gap-2">
-                                                <span className="font-black text-slate-900 text-sm leading-snug line-clamp-2">{option.title}</span>
-                                                {isSelected && (
-                                                    <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0 text-xs">✓</span>
-                                                )}
-                                            </div>
-                                            <div className="mt-2 flex items-center gap-2">
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                                                    option.type === "vaccine"
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-blue-100 text-blue-700"
-                                                }`}>
-                                                    {option.type}
-                                                </span>
-                                                {option.price > 0 && (
-                                                    <span className="text-xs font-bold text-slate-500">£{option.price}</span>
-                                                )}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                                {filteredOptions.length === 0 && (
-                                    <p className="col-span-3 text-sm font-bold text-slate-400 text-center py-6">No matches found</p>
-                                )}
-                            </div>
-
-                            {selectedService && (
-                                <p className="mt-3 text-xs font-black text-primary uppercase tracking-widest">
-                                    ✓ Selected: {selectedService.title}
-                                </p>
-                            )}
-                        </section>
-
-                        <div className="grid lg:grid-cols-2 gap-12">
-                            {/* Date Picker */}
-                            <section>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm">1</div>
-                                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Pick a Date</h2>
-                                </div>
-                                {datesLoading ? (
-                                    <div className="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-2xl animate-pulse">
-                                        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
-                                        <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Loading dates...</span>
-                                    </div>
-                                ) : datesError ? (
-                                    <div className="text-center py-12 bg-red-50 rounded-2xl border border-red-100">
-                                        <p className="font-black text-red-700">Failed to load available dates</p>
-                                        <p className="text-xs text-red-500 mt-1 font-bold">{datesError}</p>
-                                    </div>
-                                ) : availableDates.length === 0 ? (
-                                    <div className="text-center py-12 bg-amber-50 rounded-2xl border border-amber-100">
-                                        <p className="font-black text-amber-700">No Dates Available</p>
-                                        <p className="text-xs text-amber-600 mt-1 font-bold">Please try again later.</p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-                                        {/* Calendar Navigator */}
-                                        <div className="flex items-center justify-between p-4 bg-slate-50 border-b border-slate-100">
-                                            <button 
-                                                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                                                disabled={isSameMonth(currentMonth, startOfMonth(addDays(startOfToday(), 1)))}
-                                                className="p-2 hover:bg-white rounded-xl transition-all disabled:opacity-30 disabled:pointer-events-none"
-                                            >
-                                                <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                                            </button>
-                                            <span className="text-sm font-black text-slate-800 uppercase tracking-widest">{format(currentMonth, "MMMM yyyy")}</span>
-                                            <button 
-                                                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                                                className="p-2 hover:bg-white rounded-xl transition-all"
-                                            >
-                                                <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                                            </button>
-                                        </div>
-
-                                        {/* Calendar Grid */}
-                                        <div className="p-4">
-                                            <div className="grid grid-cols-7 mb-2">
-                                                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                                                    <div key={day} className="text-[10px] font-black text-slate-400 text-center uppercase tracking-wider py-1">{day}</div>
-                                                ))}
-                                            </div>
-                                            <div className="grid grid-cols-7 gap-1">
-                                                {(() => {
-                                                    const start = startOfWeek(startOfMonth(currentMonth));
-                                                    const end = endOfWeek(endOfMonth(currentMonth));
-                                                    const days = eachDayOfInterval({ start, end });
-                                                    
-                                                    return days.map((day) => {
-                                                        const isCurrentMonth = isSameMonth(day, currentMonth);
-                                                        const isAvailable = availableDates.some(ad => isSameDay(ad, day));
-                                                        const isPast = isBefore(day, startOfToday());
-                                                        const isSelected = isSameDay(day, selectedDate);
-                                                        const isBookable = isAvailable && !isPast;
-
-                                                        return (
-                                                            <button
-                                                                key={day.toISOString()}
-                                                                disabled={!isBookable}
-                                                                onClick={() => setSelectedDate(day)}
-                                                                className={`
-                                                                    aspect-square flex items-center justify-center text-sm rounded-xl transition-all relative
-                                                                    ${!isCurrentMonth ? "opacity-0 pointer-events-none" : ""}
-                                                                    ${isSelected 
-                                                                        ? "bg-primary text-white font-black shadow-lg shadow-primary/30 scale-105 z-10" 
-                                                                        : isBookable 
-                                                                            ? "hover:bg-primary/10 hover:text-primary text-slate-700 font-bold bg-white border border-slate-100" 
-                                                                            : "text-slate-200 cursor-not-allowed"
-                                                                    }
-                                                                `}
-                                                            >
-                                                                {format(day, "d")}
-                                                                {isBookable && !isSelected && (
-                                                                    <div className="absolute bottom-1 w-1 h-1 bg-primary/40 rounded-full" />
-                                                                )}
-                                                            </button>
-                                                        );
-                                                    });
-                                                })()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                                <p className="mt-4 text-[10px] text-slate-400 italic font-bold tracking-wide">* Showing only available dates.</p>
-                            </section>
-
-                            {/* Time Slots */}
-                            <section>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm">2</div>
-                                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Pick a Time</h2>
-                                </div>
-
-                                {slotsLoading ? (
-                                    <div className="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-2xl animate-pulse">
-                                        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
-                                        <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Scanning slots...</span>
-                                    </div>
-                                ) : isClosed ? (
-                                    <div className="text-center py-12 bg-red-50 rounded-2xl border border-red-100">
-                                        <div className="text-3xl mb-3">🏥</div>
-                                        <p className="font-black text-red-700">Clinic Closed</p>
-                                        <p className="text-xs text-red-500 mt-1 font-bold">Please select another date above.</p>
-                                    </div>
-                                ) : availableSlots.length === 0 ? (
-                                    <div className="text-center py-12 bg-amber-50 rounded-2xl border border-amber-100">
-                                        <div className="text-3xl mb-3">⏰</div>
-                                        <p className="font-black text-amber-700">Fully Booked</p>
-                                        <p className="text-xs text-amber-600 mt-1 font-bold">All slots taken for this day.</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                                        {availableSlots.map((slot) => {
-                                            const isReserved = slot.available <= 0;
-                                            const isSelected = selectedTime === slot.time;
-
-                                            return (
-                                                <button
-                                                    key={slot.time}
-                                                    onClick={() => {
-                                                        if (!isReserved) setSelectedTime(slot.time);
-                                                    }}
-                                                    disabled={isReserved}
-                                                    className={`py-3 rounded-xl text-sm font-black transition-all relative ${
-                                                        isReserved
-                                                            ? "bg-red-50 border border-red-200 text-red-600 cursor-not-allowed"
-                                                            : isSelected
-                                                                ? "bg-secondary text-white shadow-lg shadow-secondary/30 ring-2 ring-secondary ring-offset-2"
-                                                                : "bg-white border border-slate-200 hover:border-secondary/50 text-slate-700"
-                                                    }`}
-                                                >
-                                                    <span className="block leading-none">{slot.time}</span>
-                                                    {isReserved && (
-                                                        <span className="block mt-1 text-[10px] uppercase tracking-wider">Reserved</span>
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </section>
-                        </div>
-
-                        {/* Stage 1 Footer */}
-                        <div className="pt-10 border-t border-slate-100 flex justify-end">
-                            <button
-                                disabled={!selectedService || !selectedTime}
-                                onClick={handleStep1Submit}
-                                className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-14 py-5 rounded-2xl font-black text-xl shadow-2xl shadow-primary/30 disabled:opacity-50 disabled:shadow-none transition-all transform hover:-translate-y-1 active:scale-95"
-                            >
-                                Continue to Details
-                            </button>
-                        </div>
-                    </div>
+                    <StepSelectService
+                        allOptions={allOptions}
+                        filteredOptions={filteredOptions}
+                        selectedService={selectedService}
+                        setSelectedService={setSelectedService}
+                        serviceSearch={serviceSearch}
+                        setServiceSearch={setServiceSearch}
+                        onContinue={handleStep1Submit}
+                    />
                 )}
 
-                {/* ─── Stage 2: Patient Details ─── */}
+                {/* ─── Step 2: Schedule (Date & Time) ─── */}
                 {step === 2 && (
-                    <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                        <button onClick={() => setStep(1)} className="inline-flex items-center gap-3 text-sm font-black text-slate-400 hover:text-primary mb-10 transition-colors group">
-                             <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                            </div>
-                            Update Date & Time
-                        </button>
-
-                        <div className="grid lg:grid-cols-12 gap-12">
-                            <div className="lg:col-span-12">
-                                <h2 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Patient Information</h2>
-                                <p className="text-slate-400 font-bold text-sm mb-12">Ensure all medical details are accurate for your consultation records.</p>
-                                
-                                <form onSubmit={handleDetailsSubmit} className="grid sm:grid-cols-2 gap-10">
-                                    <div className="space-y-8">
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Full Name</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="Enter full name"
-                                                value={formData.name}
-                                                onChange={(e) => {
-                                                    setFormData({ ...formData, name: e.target.value });
-                                                    if (formErrors.name) {
-                                                        setFormErrors((prev) => ({ ...prev, name: undefined }));
-                                                    }
-                                                }}
-                                                minLength={2}
-                                                maxLength={80}
-                                                className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold placeholder:text-slate-300"
-                                            />
-                                            {formErrors.name && <p className="mt-2 text-xs font-bold text-red-600">{formErrors.name}</p>}
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Email Address</label>
-                                            <input
-                                                type="email"
-                                                required
-                                                placeholder="patient@medical.com"
-                                                value={formData.email}
-                                                onChange={(e) => {
-                                                    setFormData({ ...formData, email: e.target.value });
-                                                    if (formErrors.email) {
-                                                        setFormErrors((prev) => ({ ...prev, email: undefined }));
-                                                    }
-                                                }}
-                                                maxLength={120}
-                                                className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold placeholder:text-slate-300"
-                                            />
-                                            {formErrors.email && <p className="mt-2 text-xs font-bold text-red-600">{formErrors.email}</p>}
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Contact Number</label>
-                                            <input
-                                                type="tel"
-                                                required
-                                                placeholder="+44 7700 900XXX"
-                                                value={formData.phone}
-                                                onChange={(e) => {
-                                                    const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10);
-                                                    setFormData({ ...formData, phone: digitsOnly });
-                                                    if (formErrors.phone) {
-                                                        setFormErrors((prev) => ({ ...prev, phone: undefined }));
-                                                    }
-                                                }}
-                                                inputMode="numeric"
-                                                pattern="\d{10}"
-                                                minLength={10}
-                                                maxLength={10}
-                                                className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none font-bold placeholder:text-slate-300"
-                                            />
-                                            {formErrors.phone && <p className="mt-2 text-xs font-bold text-red-600">{formErrors.phone}</p>}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-8">
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3 px-1">Medical Notes (Optional)</label>
-                                            <textarea
-                                                rows={10}
-                                                placeholder="Allergies, chronic conditions, or specific requirements..."
-                                                value={formData.notes}
-                                                onChange={(e) => {
-                                                    setFormData({ ...formData, notes: e.target.value });
-                                                    if (formErrors.notes) {
-                                                        setFormErrors((prev) => ({ ...prev, notes: undefined }));
-                                                    }
-                                                }}
-                                                maxLength={500}
-                                                className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary transition-all text-slate-900 outline-none resize-none font-bold placeholder:text-slate-300"
-                                            />
-                                            <div className="mt-2 flex items-center justify-between gap-4">
-                                                {formErrors.notes ? (
-                                                    <p className="text-xs font-bold text-red-600">{formErrors.notes}</p>
-                                                ) : (
-                                                    <span />
-                                                )}
-                                                <p className="text-[10px] font-bold text-slate-400">{formData.notes.length}/500</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="sm:col-span-2 pt-10 flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 gap-8">
-                                        <div className="flex items-center gap-5 text-slate-400 max-w-sm">
-                                            <div className="w-14 h-14 min-w-[3.5rem] rounded-2xl bg-primary/5 flex items-center justify-center text-primary text-2xl shadow-sm">🛡️</div>
-                                            <p className="text-[10px] leading-relaxed font-bold uppercase tracking-wide">Secure encrypted transmission. GDPR compliant medical record handling.</p>
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            disabled={isCreatingPayment}
-                                            className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-16 py-6 rounded-2xl font-black text-xl shadow-2xl shadow-primary/30 disabled:opacity-50 transition-all transform hover:-translate-y-1 active:scale-95"
-                                        >
-                                            {isCreatingPayment ? "Securing Appointment..." : "Proceed to Payment"}
-                                        </button>
-                                    </div>
-                                    {paymentError && <p className="sm:col-span-2 text-red-600 text-sm font-black text-center mt-6 bg-red-50 py-4 rounded-2xl border border-red-100 shadow-sm animate-bounce">{paymentError}</p>}
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                    <StepSchedule
+                        selectedService={selectedService}
+                        datesLoading={datesLoading}
+                        datesError={datesError}
+                        availableDates={availableDates}
+                        currentMonth={currentMonth}
+                        setCurrentMonth={setCurrentMonth}
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                        availableSlots={availableSlots}
+                        slotsLoading={slotsLoading}
+                        isClosed={isClosed}
+                        selectedTime={selectedTime}
+                        setSelectedTime={setSelectedTime}
+                        onBack={() => setStep(1)}
+                        onContinue={handleStep2Submit}
+                    />
                 )}
 
-                {/* ─── Stage 3: Secure Payment ─── */}
-                {step === 3 && clientSecret && (
-                    <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-                        <button onClick={() => setStep(2)} className="inline-flex items-center gap-3 text-sm font-black text-slate-400 hover:text-primary mb-10 transition-colors group">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                            </div>
-                            Edit Patient Info
-                        </button>
+                {/* ─── Step 3: Patient Details ─── */}
+                {step === 3 && (
+                    <StepDetails
+                        setStep={setStep}
+                        formData={formData}
+                        setFormData={setFormData}
+                        formErrors={formErrors}
+                        setFormErrors={setFormErrors}
+                        handleDetailsSubmit={handleDetailsSubmit}
+                        isCreatingPayment={isCreatingPayment}
+                        paymentError={paymentError}
+                    />
+                )}
 
-                        <div className="max-w-xl mx-auto">
-                            <h2 className="text-4xl font-black text-slate-900 mb-3 text-center tracking-tight">Finalise Booking</h2>
-                            <p className="text-slate-400 text-center font-bold mb-12 uppercase tracking-widest text-xs">Total payable: <span className="text-secondary font-black text-2xl ml-2 tracking-normal lowercase">£{selectedService?.price}</span></p>
-                            
-                            <div className="bg-slate-50 rounded-[48px] p-10 mb-10 border-2 border-slate-100 shadow-inner relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-8 opacity-5 font-black text-8xl pointer-events-none">£</div>
-                                <section className="space-y-6 mb-12 relative z-10">
-                                    <div className="flex justify-between items-center text-sm font-black">
-                                        <span className="text-slate-400 uppercase tracking-widest text-[10px]">Service</span>
-                                        <span className="text-slate-900 border-b-2 border-slate-200">{selectedService?.title}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm font-black">
-                                        <span className="text-slate-400 uppercase tracking-widest text-[10px]">Date/Time</span>
-                                        <span className="text-slate-900 text-right">{format(selectedDate, "EEE, MMM d")} at {selectedTime}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm font-black">
-                                        <span className="text-slate-400 uppercase tracking-widest text-[10px]">Patient</span>
-                                        <span className="text-slate-900">{formData.name}</span>
-                                    </div>
-                                </section>
-
-                                <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-5 shadow-sm">
-                                    <span className="text-3xl animate-pulse">⏰</span>
-                                    <p className="leading-relaxed">This selection is transiently locked. Complete payment within 10 minutes to secure your appointment permanently.</p>
-                                </div>
-                            </div>
-
-                            {isMockPayment ? (
-                                <div className="text-center p-16 bg-blue-600 rounded-[48px] shadow-3xl shadow-blue-200 transform hover:scale-[1.02] transition-all">
-                                    <div className="text-6xl mb-8">🛠️</div>
-                                    <h3 className="text-3xl font-black text-white mb-4 tracking-tight">Security Gateway</h3>
-                                    <p className="text-blue-100 mb-12 font-bold opacity-80 uppercase tracking-widest text-[10px]">Internal Simulation Mode Active</p>
-                                    <button
-                                        onClick={handleBookingSuccess}
-                                        className="w-full bg-white text-blue-600 font-black py-6 px-12 rounded-3xl shadow-2xl transition-all transform hover:-translate-y-2 hover:bg-slate-50 active:scale-95 text-xl uppercase tracking-tighter"
-                                    >
-                                        Authorise Appointment
-                                    </button>
-                                </div>
-                            ) : (
-                                <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
-                                    <CheckoutForm
-                                        amount={selectedService?.price}
-                                        onSuccess={handleBookingSuccess}
-                                    />
-                                </Elements>
-                            )}
-                        </div>
-                    </div>
+                {/* ─── Step 4: Secure Payment ─── */}
+                {step === 4 && clientSecret && (
+                    <StepPayment
+                        setStep={setStep}
+                        selectedService={selectedService}
+                        selectedDate={selectedDate}
+                        selectedTime={selectedTime}
+                        formData={formData}
+                        isMockPayment={isMockPayment}
+                        clientSecret={clientSecret}
+                        handleBookingSuccess={handleBookingSuccess}
+                    />
                 )}
             </div>
         </div>
