@@ -88,3 +88,14 @@ export async function getCategories() {
         return { success: false, error: error.message };
     }
 }
+
+export async function getCategoryBySlug(slug: string) {
+    try {
+        await connectToDatabase();
+        const category = await Category.findOne({ slug }).lean();
+        if (!category) return { success: false, error: "Category not found" };
+        return { success: true, category: JSON.parse(JSON.stringify(category)) };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}

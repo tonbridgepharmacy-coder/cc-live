@@ -166,3 +166,16 @@ export async function getVaccineById(id: string) {
         return { success: false, error: getErrorMessage(error) };
     }
 }
+
+export async function getPublishedVaccinesByCategory(categoryId: string) {
+    try {
+        await connectToDatabase();
+        const vaccines = await Vaccine.find({ status: 'published', category: categoryId })
+            .populate('category')
+            .select('-content')
+            .sort({ createdAt: -1 });
+        return { success: true, vaccines: JSON.parse(JSON.stringify(vaccines)) };
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error) };
+    }
+}

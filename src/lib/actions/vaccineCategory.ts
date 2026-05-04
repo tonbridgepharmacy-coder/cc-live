@@ -72,3 +72,14 @@ export async function getVaccineCategories() {
         return { success: false, error: error.message };
     }
 }
+
+export async function getVaccineCategoryBySlug(slug: string) {
+    try {
+        await connectToDatabase();
+        const category = await VaccineCategory.findOne({ slug }).lean();
+        if (!category) return { success: false, error: "Category not found" };
+        return { success: true, category: JSON.parse(JSON.stringify(category)) };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getVaccineBySlug } from "@/lib/actions/vaccine";
+import { getVaccineBySlug, getPublishedVaccinesByCategory } from "@/lib/actions/vaccine";
+import { getVaccineCategoryBySlug, getVaccineCategories } from "@/lib/actions/vaccineCategory";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Star, Clock, ShieldCheck } from "lucide-react";
 import { Metadata } from "next";
@@ -13,6 +14,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     const res = await getVaccineBySlug(resolvedParams.slug);
 
     if (!res.success || !res.vaccine || res.vaccine.status !== "published") {
+        // Check if it's a vaccine category
+        const catRes = await getVaccineCategoryBySlug(resolvedParams.slug);
+        if (catRes.success && catRes.category) {
+            return {
+                title: `${catRes.category.name} Vaccines`,
+                description: `Browse all ${catRes.category.name} vaccinations at Clarke & Coleman Pharmacy. Book your appointment online today.`,
+            };
+        }
         return { title: "Not Found" };
     }
 
@@ -40,14 +49,19 @@ export default async function VaccineDetailsPage({ params }: { params: { slug: s
     const resolvedParams = await params;
     const res = await getVaccineBySlug(resolvedParams.slug);
 
-    if (!res.success) {
-        if (res.error === "Vaccine not found") {
-            notFound();
+    // ─── Vaccine Category Landing Page Fallback ───
+    if (!res.success || !res.vaccine || res.vaccine.status !== "published") {
+        const catRes = await getVaccineCategoryBySlug(resolvedParams.slug);
+        if (catRes.success && catRes.category) {
+            const category = catRes.category;
+            const [vaccinesRes, allCatsRes] = await Promise.all([
+                getPublishedVaccinesByCategory(category._id),
+                getVaccineCategories(),
+            ]);
+            const vaccines = vaccinesRes.success ? vaccinesRes.vaccines : [];
+            const allCategories = allCatsRes.success ? allCatsRes.categories : [];
+            return <VaccineCategoryPage category={category} vaccines={vaccines} allCategories={allCategories} />;
         }
-        throw new Error(res.error || "Failed to load vaccine");
-    }
-
-    if (!res.vaccine || res.vaccine.status !== "published") {
         notFound();
     }
 
@@ -165,6 +179,143 @@ export default async function VaccineDetailsPage({ params }: { params: { slug: s
                         </div>
 
                     </div>
+                </div>
+            </section>
+        </div>
+    );
+}
+
+// ─── Vaccine Category Landing Page Component ───
+function VaccineCategoryPage({ category, vaccines, allCategories }: { category: any; vaccines: any[]; allCategories: any[] }) {
+    return (
+        <div className="min-h-screen bg-background">
+            {/* Hero */}
+            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-[#0F172A]">
+                <div className="absolute inset-0 z-0 opacity-30">
+                    <Image
+                        src="https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?auto=format&fit=crop&w=2000&q=80"
+                        alt={category.name}
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0F172A] via-[#0F172A]/80 to-transparent" />
+                </div>
+                <div className="relative z-10 section-container section-padding">
+                    <div className="max-w-3xl">
+                        <nav className="flex items-center gap-2 text-sm text-white/60 mb-8">
+                            <Link href="/" className="hover:text-white transition-colors">Home</Link>
+                            <span>/</span>
+                            <Link href="/vaccines" className="hover:text-white transition-colors">Vaccines</Link>
+                            <span>/</span>
+                            <span className="text-white">{category.name}</span>
+                        </nav>
+                        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1]">
+                            {category.name}
+                        </h1>
+                        <p className="mt-6 text-lg sm:text-xl text-white/80 leading-relaxed max-w-2xl">
+                            Browse our full range of {category.name} vaccinations and book your appointment online today.
+                        </p>
+                        <Link
+                            href="/book"
+                            className="mt-10 inline-flex items-center gap-3 px-10 py-5 bg-secondary text-white font-bold rounded-2xl shadow-2xl shadow-secondary/30 hover:-translate-y-1 transition-all text-lg"
+                        >
+                            Book an Appointment
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* Vaccines Grid */}
+            <section className="section-padding bg-background -mt-10 rounded-t-[3rem] shadow-2xl relative z-20">
+                <div className="section-container">
+
+                    {/* Category Nav Pills */}
+                    {allCategories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-12">
+                            <Link
+                                href="/vaccines"
+                                className="px-5 py-2.5 rounded-full text-sm font-semibold transition-all bg-white border border-border text-text-secondary hover:border-primary hover:text-primary"
+                            >
+                                All
+                            </Link>
+                            {allCategories.map((cat: any) => (
+                                <Link
+                                    key={cat._id}
+                                    href={`/vaccines/${cat.slug}`}
+                                    className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                                        cat._id === category._id
+                                            ? "bg-primary text-white shadow-sm"
+                                            : "bg-white border border-border text-text-secondary hover:border-primary hover:text-primary"
+                                    }`}
+                                >
+                                    {cat.name}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+
+                    {vaccines.length === 0 ? (
+                        <div className="text-center py-20 text-text-secondary">
+                            <p className="text-xl font-bold text-text-primary mb-2">No vaccines yet</p>
+                            <p>Check back soon for updates.</p>
+                        </div>
+                    ) : (
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                            {vaccines.map((vaccine: any) => (
+                                <div
+                                    key={vaccine._id}
+                                    className="group flex flex-col bg-white rounded-3xl overflow-hidden border border-border/50 shadow-sm hover:shadow-2xl hover:shadow-accent/10 hover:border-accent/30 transition-all duration-300 hover:-translate-y-1"
+                                >
+                                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                                        <Image
+                                            src={vaccine.cardImage || "/placeholder-image.jpg"}
+                                            alt={vaccine.title}
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-60 group-hover:opacity-80 transition-opacity" />
+                                        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-xl font-bold text-primary shadow-lg flex flex-col items-end">
+                                            {vaccine.crossedPrice && (
+                                                <span className="text-[10px] text-gray-400 line-through">£{vaccine.crossedPrice}</span>
+                                            )}
+                                            <span>£{vaccine.price}</span>
+                                        </div>
+                                    </div>
+                                    <div className="p-6 flex flex-col flex-grow">
+                                        <h3 className="text-xl font-bold text-text-primary mb-2 group-hover:text-accent transition-colors line-clamp-1">
+                                            {vaccine.title}
+                                        </h3>
+                                        {vaccine.rating && (
+                                            <div className="flex items-center gap-1 mb-3 text-orange-500 text-sm font-bold">
+                                                ★ {vaccine.rating} / 5.0
+                                            </div>
+                                        )}
+                                        <p className="text-sm text-text-secondary line-clamp-2 mb-4 flex-grow">
+                                            {truncateText(stripHtmlTags(vaccine.shortDescription || ""), 120)}
+                                        </p>
+                                        <div className="mt-auto flex items-center gap-2">
+                                            <Link
+                                                href={`/vaccines/${vaccine.slug}`}
+                                                className="flex-1 text-center px-3 py-2.5 border border-border rounded-xl text-xs font-bold text-text-primary hover:border-primary hover:text-primary transition-colors"
+                                            >
+                                                Learn More
+                                            </Link>
+                                            <Link
+                                                href={`/book?serviceId=${vaccine._id}`}
+                                                className="flex-1 text-center px-3 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary-dark transition-colors shadow-sm"
+                                            >
+                                                Book Now
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
         </div>

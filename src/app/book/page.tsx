@@ -2,6 +2,7 @@ import BookingForm from "@/components/booking/BookingForm";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import type { Metadata } from "next";
 import { getPublishedVaccines } from "@/lib/actions/vaccine";
+import { getPublishedServices } from "@/lib/actions/service";
 
 export const metadata: Metadata = {
     title: "Book an Appointment",
@@ -12,8 +13,12 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function BookPage() {
-    const vaccinesRes = await getPublishedVaccines();
+    const [vaccinesRes, servicesRes] = await Promise.all([
+        getPublishedVaccines(),
+        getPublishedServices(),
+    ]);
     const vaccines = vaccinesRes.success ? vaccinesRes.vaccines ?? [] : [];
+    const services = servicesRes.success ? servicesRes.services ?? [] : [];
 
     return (
         <>
@@ -27,15 +32,14 @@ export default async function BookPage() {
                         Book Your Appointment
                     </h1>
                     <p className="text-base sm:text-lg text-text-secondary leading-relaxed max-w-2xl mx-auto">
-                        Select your vaccine appointment info, enter your details, and secure your booking
-                        online in 3 easy steps.
+                        Select your service or vaccine, choose a date and time, then secure your booking online in 3 easy steps.
                     </p>
                 </div>
             </section>
 
             <section className="py-16 bg-background">
                 <div className="section-container section-padding">
-                    <BookingForm vaccines={vaccines} />
+                    <BookingForm vaccines={vaccines} services={services} />
                 </div>
             </section>
         </>

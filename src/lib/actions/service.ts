@@ -117,6 +117,19 @@ export async function getPublishedServices() {
     }
 }
 
+export async function getPublishedServicesByCategory(categoryId: string) {
+    try {
+        await connectToDatabase();
+        const services = await Service.find({ status: 'published', category: categoryId })
+            .populate('category')
+            .select('-content')
+            .sort({ createdAt: -1 });
+        return { success: true, services: JSON.parse(JSON.stringify(services)) };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
 export async function getServiceBySlug(slug: string) {
     try {
         const db = await connectToDatabase();

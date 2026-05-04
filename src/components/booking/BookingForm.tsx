@@ -95,22 +95,45 @@ export default function BookingForm(props: any) {
 
 // ─── Inner Booking Component ───
 function BookingFormInner({
-    vaccines = []
+    vaccines = [],
+    services = [],
 }: {
-    vaccines?: any[]
+    vaccines?: any[];
+    services?: any[];
 }) {
     const searchParams = useSearchParams();
     const serviceIdParam = searchParams.get("serviceId");
 
-    const vaccineOptions = [
+    const allOptions = [
+        ...services.map((s: any) => ({
+            ...s,
+            id: s._id || s.id,
+            type: "service",
+            price: s.price ?? 0,
+            title: s.title,
+            category: s.category?.name || "Service",
+        })),
         ...vaccines.map((v: any) => ({
             ...v,
             id: v._id || v.id,
             type: "vaccine",
             price: v.price ?? 0,
-            title: v.title
+            title: v.title,
+            category: v.category?.name || "Vaccine",
         })),
     ];
+
+    const vaccineOptions = allOptions; // keep existing variable name used below
+
+    const [serviceSearch, setServiceSearch] = useState("");
+    const filteredOptions = allOptions.filter((o) => {
+        const q = serviceSearch.toLowerCase();
+        return (
+            !q ||
+            o.title.toLowerCase().includes(q) ||
+            (o.category || "").toLowerCase().includes(q)
+        );
+    });
 
     const [step, setStep] = useState(1);
     const [selectedService, setSelectedService] = useState<any>(null);
@@ -135,15 +158,15 @@ function BookingFormInner({
     useEffect(() => {
         if (!selectedService) {
             let initialService = null;
-            if (serviceIdParam && vaccineOptions.length > 0) {
-                initialService = vaccineOptions.find((s: any) => s.id === serviceIdParam);
+            if (serviceIdParam && allOptions.length > 0) {
+                initialService = allOptions.find((s: any) => s.id === serviceIdParam);
             }
-            if (!initialService && vaccineOptions.length > 0) {
-                initialService = vaccineOptions[0]; // Default to first available vaccine
+            if (!initialService && allOptions.length > 0) {
+                initialService = null; // Don't auto-select; user must choose
             }
             setSelectedService(initialService);
         }
-    }, [serviceIdParam, vaccineOptions.length, selectedService]);
+    }, [serviceIdParam, allOptions.length, selectedService]);
 
     // Slot availability state
     const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
@@ -265,8 +288,8 @@ function BookingFormInner({
             nextErrors.email = "Please enter a valid email address.";
         }
 
-        if (phoneDigits.length !== 10) {
-            nextErrors.phone = "Contact number must be exactly 10 digits.";
+        if (phoneDigits.length !== 11) {
+            nextErrors.phone = "Contact number must be exactly 11 digits.";
         }
 
         if (trimmedNotes.length > 500) {
@@ -409,13 +432,81 @@ function BookingFormInner({
                 {/* ─── Stage 1: Service + Date & Time ─── */}
                 {step === 1 && (
                     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {vaccineOptions.length === 0 && (
+                        {allOptions.length === 0 && (
                             <section className="bg-red-50 rounded-2xl border border-red-100 p-6 sm:p-8">
                                 <p className="text-sm font-black text-red-700">
-                                    No vaccines are available for online booking right now. Please contact the clinic.
+                                    No services are available for online booking right now. Please contact the clinic.
                                 </p>
                             </section>
                         )}
+
+                        {/* ─── Service / Vaccine Selector ─── */}
+                        <section>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm">✦</div>
+                                <h2 className="text-xl font-black text-slate-900 tracking-tight">Select a Service or Vaccine</h2>
+                            </div>
+
+                            {/* Search */}
+                            <div className="relative mb-4 max-w-md">
+                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7 7 0 1116.65 16.65z" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="Search services &amp; vaccines..."
+                                    value={serviceSearch}
+                                    onChange={(e) => setServiceSearch(e.target.value)}
+                                    className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm font-bold"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
+                                {filteredOptions.map((option: any) => {
+                                    const isSelected = selectedService?.id === option.id;
+                                    return (
+                                        <button
+                                            key={option.id}
+                                            type="button"
+                                            onClick={() => setSelectedService(option)}
+                                            className={`text-left p-4 rounded-2xl border-2 transition-all ${
+                                                isSelected
+                                                    ? "border-primary bg-primary/5 shadow-sm"
+                                                    : "border-slate-200 bg-white hover:border-primary/40"
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <span className="font-black text-slate-900 text-sm leading-snug line-clamp-2">{option.title}</span>
+                                                {isSelected && (
+                                                    <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0 text-xs">✓</span>
+                                                )}
+                                            </div>
+                                            <div className="mt-2 flex items-center gap-2">
+                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                                                    option.type === "vaccine"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-blue-100 text-blue-700"
+                                                }`}>
+                                                    {option.type}
+                                                </span>
+                                                {option.price > 0 && (
+                                                    <span className="text-xs font-bold text-slate-500">£{option.price}</span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                                {filteredOptions.length === 0 && (
+                                    <p className="col-span-3 text-sm font-bold text-slate-400 text-center py-6">No matches found</p>
+                                )}
+                            </div>
+
+                            {selectedService && (
+                                <p className="mt-3 text-xs font-black text-primary uppercase tracking-widest">
+                                    ✓ Selected: {selectedService.title}
+                                </p>
+                            )}
+                        </section>
 
                         <div className="grid lg:grid-cols-2 gap-12">
                             {/* Date Picker */}
@@ -570,7 +661,7 @@ function BookingFormInner({
                         {/* Stage 1 Footer */}
                         <div className="pt-10 border-t border-slate-100 flex justify-end">
                             <button
-                                disabled={!selectedService || !canBookOnline || !selectedTime}
+                                disabled={!selectedService || !selectedTime}
                                 onClick={handleStep1Submit}
                                 className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-14 py-5 rounded-2xl font-black text-xl shadow-2xl shadow-primary/30 disabled:opacity-50 disabled:shadow-none transition-all transform hover:-translate-y-1 active:scale-95"
                             >
